@@ -40,6 +40,7 @@ function newState(){
 }
 
 function Engine(S){
+ S.queue=S.queue||[];for(const x of S.slimes){const cap=Math.round(total(x)+40+S.slimes.length*3);if(!x.nextSplit||x.nextSplit>cap)x.nextSplit=cap}
  S.queue=S.queue||[];if(S.seasonIdx===undefined)S.seasonIdx=clock(S.steps).si;
  for(const x of S.slimes){x.facts=x.facts.filter(f=>safeText(f.f));x.chat=x.chat.filter(m=>m.r==='u'||safeText(m.t))}
  S.bugs=S.bugs||[];S.threat=S.threat||0;S.alerta=S.alerta||0;if(S.pred===undefined)S.pred=null;S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
@@ -89,10 +90,10 @@ function Engine(S){
   s.k[d]=Math.round(((s.k[d]||0)+pts)*100)/100;
   if(profName(s)!==pn0)log(`${s.name} agora é ${profName(s)}!`);
   if(level(s)>l0)log(`${s.name} chegou ao nível ${level(s)}.`);
-  if(total(s)>=s.nextSplit&&S.slimes.length<MAXS&&(S.steps||0)-(S.lastSplit??-1e9)>=12*S.slimes.length){S.lastSplit=S.steps||0;split(s)}
+  if(total(s)>=s.nextSplit&&S.slimes.length<MAXS&&(S.steps||0)-(S.lastSplit??-1e9)>=4*S.slimes.length){S.lastSplit=S.steps||0;split(s)}
  }
  function split(s){
-  s.nextSplit=Math.round(s.nextSplit*1.9+10);
+  s.nextSplit=Math.round(total(s)+40+S.slimes.length*3);
   const used=new Set(S.slimes.map(x=>x.name));
   let name=NAMES.find(n=>!used.has(n));if(!name){const suf=['do Riacho','da Colina','do Bosque','da Cachoeira','do Vale','da Lagoa','Júnior','Segundo'];for(const a of NAMES){for(const b of suf){if(!used.has(a+' '+b)){name=a+' '+b;break}}if(name)break}}name=name||('Slime '+S.nextId);
   const hue=Math.max(175,Math.min(290,s.hue+(Math.random()*50-25)));
