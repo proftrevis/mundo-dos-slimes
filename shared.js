@@ -220,9 +220,15 @@ function Engine(S){
   return false;
  }
  function checkExpand(){
-  const n=S.slimes.length;
+  const n=S.slimes.length,b=S.bounds,w=b.x1-b.x0,h=b.y1-b.y0;
+  // o mundo se alarga para os lados conforme a população cresce (e um pouco para cima e para baixo)
+  const tw=Math.min(240,28+Math.round(n*1.6)),th=Math.min(120,26+Math.round(n*.5));
+  let grew=false;
+  if(w<tw){b.x0-=2;b.x1+=2;grew=true}
+  if(h<th&&S.steps%9===0){b.y0-=1;b.y1+=1;grew=true}
   const want=has('ponte')?8+n*1.3:4+n;
-  if(freeSpots(want)<want&&S.bounds.x1-S.bounds.x0<200){const b=S.bounds;b.x0-=3;b.x1+=3;b.y0-=3;b.y1+=3;countTrees();log('O mundo cresceu! Novas áreas de floresta foram descobertas.')}
+  if(!grew&&freeSpots(want)<want&&w<240){b.x0-=3;b.x1+=3;b.y0-=1;b.y1+=1;grew=true}
+  if(grew){countTrees();if(!S.lastGrowLog||S.steps-S.lastGrowLog>150){S.lastGrowLog=S.steps;log('O mundo cresceu! Novas áreas de floresta foram descobertas nas laterais.')}}
  }
  function needs(){
   const n=S.slimes.length,r=S.res,nd={};for(const d of DK)nd[d]=0;
