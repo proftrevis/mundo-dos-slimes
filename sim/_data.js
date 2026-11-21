@@ -1,5 +1,5 @@
 const DOMS={
- natureza:{n:'Natureza e cultivo',p:'Agricultor',c:'#4caf50',kw:'planta arvore fruta semente solo terra flor cultivo colheita horta jardim adubo floresta folha raiz broto muda polinizacao abelha verdura legume plantar regar fotossintese'},
+ natureza:{n:'Natureza e cultivo',p:'Agricultor',c:'#4caf50',kw:'planta arvore fruta semente solo terra flor cultivo colheita horta jardim adubo floresta folha raiz broto muda polinizacao abelha verdura legume plantar regar fotossintese inseto insetos cacar caca grilo besouro gafanhoto mariposa vagalume'},
  construcao:{n:'Construção',p:'Construtor',c:'#d08b3c',kw:'casa construir construcao parede telhado tijolo fundacao arquitetura ponte estrutura cimento argila viga porta janela alicerce obra planta baixa'},
  carpintaria:{n:'Carpintaria',p:'Carpinteiro',c:'#a5683a',kw:'madeira serra prego movel moveis mesa cadeira martelo tabua carpinteiro galho lenha cola entalhe marcenaria verniz'},
  pedra:{n:'Pedras e minerais',p:'Pedreiro',c:'#8b93a1',kw:'pedra rocha mineral cristal geologia granito areia montanha caverna metal ferro cobre ouro quartzo marmore cascalho'},
@@ -11,7 +11,7 @@ const DOMS={
 };
 const DK=Object.keys(DOMS);
 for(const d of DK)DOMS[d].kws=DOMS[d].kw.split(' ').filter(w=>w.length>2);
-const RES={frutas:'Frutas',madeira:'Madeira',pedra:'Pedra',agua:'Água',ervas:'Ervas',tijolos:'Tijolos',mudas:'Mudas',ferramentas:'Ferramentas',refeicoes:'Refeições',remedios:'Remédios',arte:'Obras de arte'};
+const RES={frutas:'Frutas',madeira:'Madeira',pedra:'Pedra',agua:'Água',ervas:'Ervas',tijolos:'Tijolos',mudas:'Mudas',ferramentas:'Ferramentas',refeicoes:'Refeições',insetos:'Insetos',remedios:'Remédios',arte:'Obras de arte'};
 const B={
  ninho:{n:'Ninho de folhas',home:1,lv:1,tot:2,req:{},cost:{madeira:2},d:'Primeira moradia, de folhas e galhos caídos.'},
  cabana:{n:'Cabana de madeira',home:1,lv:2,req:{construcao:8},cost:{madeira:12},d:'Uma casinha de verdade.'},
@@ -50,5 +50,13 @@ const TASK={
  saude:{v:'colhendo ervas',spot:'T',topic:'ervas medicinais seguras e como usá-las',f:[['colhi a erva errada','Antes de colher, compare a folha com uma erva conhecida.'],['fiz o chá forte demais','Chá de ervas fica melhor fraquinho e com água quente, não fervendo.'],['esqueci de descansar','Descansar também faz parte de cuidar da saúde.']]},
  agua:{v:'buscando água',spot:'W',topic:'como manter a água dos riachos limpa',f:[['peguei água turva','Água da parte que corre é mais limpa que a parada.'],['derrubei o balde no riacho','Andar devagar na margem molhada evita escorregar.'],['peguei água cheia de folhas','Tirar as folhas da nascente mantém a água limpa.']]}
 };
+const BUGS={
+ grilo:{n:'grilo',c:'#7cb342',food:1.2,ag:.25,w:4,f:['o grilo pulou para longe','Grilos sentem a vibração do chão; chegar bem devagar ajuda.']},
+ besouro:{n:'besouro',c:'#4e342e',food:1.6,ag:.08,w:3,f:['o besouro se escondeu debaixo de uma folha','Besouros se escondem sob folhas e cascas; vale olhar embaixo delas.']},
+ gafanhoto:{n:'gafanhoto',c:'#9ccc65',food:1.8,ag:.32,w:2,f:['o gafanhoto deu um salto enorme','Gafanhotos saltam para a frente; chegar por trás funciona melhor.']},
+ mariposa:{n:'mariposa',c:'#d7ccc8',food:1,ag:.38,w:2,fly:1,f:['a mariposa voou bem alto','Mariposas voam devagar ao entardecer, quando é mais fácil pegá-las.']},
+ vagalume:{n:'vaga-lume',c:'#ffe066',food:2.2,ag:.45,w:1,fly:1,water:1,f:['o vaga-lume apagou e sumiu','Vaga-lumes piscam em ritmo; esperar a próxima piscada mostra onde estão.']}
+};
+TASK.caca={v:'caçando insetos',spot:'T',topic:'',f:[]};
 const FRUITC=['#e8433f','#ff9d2e','#f4d23c','#a24fd0'];
 const WIKI={natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};

@@ -143,7 +143,7 @@ a{color:var(--slime)}
 <script>
 {
 const $=s=>document.querySelector(s);
-const Mu=window.Mundo,{DOMS,DK,RES,B,TASK,total,level,profOf,profName,h2,fbm,fmt}=Mu;
+const Mu=window.Mundo,{DOMS,DK,RES,B,TASK,BUGS,total,level,profOf,profName,h2,fbm,fmt}=Mu;
 const TS=32,MARG=10;
 // Repositório: detectado pelo endereço do GitHub Pages (usuario.github.io/repositorio).
 const OWNER=location.hostname.endsWith('.github.io')?location.hostname.split('.')[0]:'';
@@ -259,6 +259,18 @@ function drawSlimeAt(c,x,by,r,hue,tm,ph,moving,selected){
  c.fillStyle='rgba(255,120,150,.45)';for(const s of[-1,1]){c.beginPath();c.ellipse(x+s*w*.55,ey+h*.18,w*.1,h*.06,0,0,7);c.fill()}
  c.strokeStyle='#1a2233';c.lineWidth=Math.max(1,r*.06);c.beginPath();c.arc(x,ey+h*.16,w*.1,.2,Math.PI-.2);c.stroke();
 }
+function drawBug(b,tm){
+ const K=BUGS[b.k];if(!K)return;const z=cam.z*TS,ph=b.id*1.7;
+ let wx=b.x+.5+Math.sin(tm/1300+ph)*.18,wy=b.y+.6+Math.cos(tm/1700+ph)*.12;
+ if(!K.fly&&Math.sin(tm/900+ph)>.96)wy-=.12;
+ const x=sx(wx),gy=sy(wy),r=Math.max(2.5,z*.09),y=K.fly?gy-z*(.35+Math.sin(tm/400+ph)*.08):gy;
+ ctx.fillStyle='rgba(0,0,0,.2)';ctx.beginPath();ctx.ellipse(x,gy,r*1.1,r*.4,0,0,7);ctx.fill();
+ if(K.fly){const f=Math.abs(Math.sin(tm/60+ph));ctx.fillStyle=b.k==='vagalume'?'rgba(255,255,255,.55)':'rgba(240,230,220,.85)';for(const sd of[-1,1]){ctx.beginPath();ctx.ellipse(x+sd*r*.9,y-r*.4,r*1.1,r*(.3+f*.6),sd*.5,0,7);ctx.fill()}}
+ if(b.k==='vagalume'){const gl=.5+.5*Math.sin(tm/350+ph);const g=ctx.createRadialGradient(x,y,0,x,y,r*5);g.addColorStop(0,`rgba(255,240,120,${.55*gl})`);g.addColorStop(1,'rgba(255,240,120,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*5,0,7);ctx.fill()}
+ ctx.fillStyle=K.c;ctx.beginPath();ctx.ellipse(x,y,r*(b.k==='gafanhoto'?1.5:1.1),r*.75,0,0,7);ctx.fill();
+ ctx.fillStyle='#1a2233';ctx.beginPath();ctx.arc(x+r*(b.k==='gafanhoto'?1.3:.95),y-r*.15,r*.45,0,7);ctx.fill();
+ if(b.k==='besouro'){ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-r,y);ctx.lineTo(x+r*.6,y);ctx.stroke()}
+}
 function bubble(x,y,text){
  ctx.font=`600 ${Math.max(12,Math.min(15,11*cam.z))}px "Baloo 2",sans-serif`;
  const words=text.length>90?text.slice(0,88)+'…':text,lines=[];let cur='';
@@ -290,6 +302,7 @@ function frame(tm){
  const objs=[];
  for(const t of trees)if(t.x>=vx0&&t.x<=vx1&&t.y>=vy0&&t.y<=vy1)objs.push({y:t.y+.85,f:()=>drawTree(t,tm)});
  for(const b of S.buildings)objs.push({y:b.y+.9,f:()=>drawBuilding(b)});
+ for(const b of S.bugs||[])if(b.x>=vx0&&b.x<=vx1&&b.y>=vy0&&b.y<=vy1)objs.push({y:b.y+.6,f:()=>drawBug(b,tm)});
  for(const s of S.slimes){const v=V[s.id];objs.push({y:v.y+.6,f:()=>{const r=z*.34*(.75+Math.min(.45,level(s)*.05));drawSlimeAt(ctx,sx(v.x+.5),sy(v.y+.6),r,s.hue,tm,v.ph,v.moving,s.id===selId);
   if(cam.z>1||s.id===selId){ctx.font=`700 ${Math.max(11,10*cam.z)}px "Baloo 2",sans-serif`;ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillText(s.name,sx(v.x+.5)+1,sy(v.y+.6)+r*.55+12);ctx.fillStyle='#fff';ctx.fillText(s.name,sx(v.x+.5),sy(v.y+.6)+r*.55+11);ctx.textAlign='left'}}})}
  objs.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
@@ -331,7 +344,7 @@ const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'agora mesmo':m===1?'há 1 minuto':m<60?`há ${m} minutos`:`há ${Math.round(m/60)} h`};
 function renderStats(){
  const area=(S.bounds.x1-S.bounds.x0-1)*(S.bounds.y1-S.bounds.y0-1),homes=S.buildings.filter(b=>B[b.type].home).length;
- $('#stats').innerHTML=`<span><b>${S.slimes.length}</b> slimes</span><span><b>${homes}</b> moradias</span><span><b>${S.buildings.length-homes}</b> construções</span><span><b>${E.treeCount}</b> árvores</span><span><b>${S.planted.length}</b> plantadas</span><span>área <b>${area}</b> lotes</span>`;
+ $('#stats').innerHTML=`<span><b>${S.slimes.length}</b> slimes</span><span><b>${homes}</b> moradias</span><span><b>${S.buildings.length-homes}</b> construções</span><span><b>${E.treeCount}</b> árvores</span><span><b>${(S.bugs||[]).length}</b> insetos</span><span><b>${S.planted.length}</b> plantadas</span><span>área <b>${area}</b> lotes</span>`;
  $('#live').textContent=`Vivo desde ${new Date(S.created).toLocaleDateString('pt-BR')} · atualizado ${ago(S.last)}`;
 }
 function renderChips(){$('#chips').innerHTML=S.slimes.map(s=>`<button class="chip" data-id="${s.id}" aria-pressed="${s.id===selId}"><i style="background:hsl(${s.hue} 75% 58%)"></i>${esc(s.name)} <small>nv ${level(s)}</small></button>`).join('')}

@@ -24,6 +24,7 @@ function newState(){
 }
 
 function Engine(S){
+ S.bugs=S.bugs||[];S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
  const plantedSet=new Set(S.planted.map(p=>p[0]+','+p[1]));
  const tcache=new Map(),bAt=new Map();
  let fruitTrees=0,treeCount=0;
@@ -121,7 +122,7 @@ function Engine(S){
  }
  function needs(){
   const n=S.slimes.length,r=S.res,nd={};for(const d of DK)nd[d]=0;
-  if(r.frutas+r.refeicoes*2<n*6)nd.natureza+=2;
+  if(r.frutas+(r.insetos||0)+r.refeicoes*2<n*6)nd.natureza+=2;
   if(r.madeira<15)nd.carpintaria+=1.5;
   if(r.pedra<12)nd.pedra+=1;
   if(r.agua<10)nd.agua+=.8;
@@ -149,8 +150,8 @@ function Engine(S){
   const d=chooseDomain(s,nd);s.w[d]=s.w[d]||1;
   if(last){const sp=spotFor(s,TASK[d].spot);s.x=Math.round(sp.x*100)/100;s.y=Math.round(sp.y*100)/100;s.task=d}
   const sk=s.k[d]||0,r=1+sk/40,mult=has('biblioteca')?1.25:1;
-  if(d==='culinaria'&&S.res.frutas<1){s.w[d]=Math.max(.2,s.w[d]-.3);return}
-  let p=.3+.62*sk/(sk+25)+Math.min(.08,(S.res.ferramentas||0)*.004)-((S.res.frutas+S.res.refeicoes)<=.01?.12:0);
+  if(d==='culinaria'&&S.res.frutas<1&&S.res.insetos<1){s.w[d]=Math.max(.2,s.w[d]-.3);return}
+  let p=.3+.62*sk/(sk+25)+Math.min(.08,(S.res.ferramentas||0)*.004)-((S.res.frutas+S.res.refeicoes+S.res.insetos)<=.01?.12:0);
   if(d==='saude'||d==='ciencia'||d==='arte')p+=.05;
   if(Math.random()<p){
    let txt='';const hz=has('horta')?1.3:1;
@@ -158,7 +159,7 @@ function Engine(S){
    else if(d==='construcao'){const v=1.2*r;add('tijolos',v);txt=`+${fmt(v)} tijolos`}
    else if(d==='carpintaria'){if(has('oficina')&&S.res.madeira>=4&&Math.random()<.4){S.res.madeira-=3;add('ferramentas',1);txt='fiz uma ferramenta!'}else{const v=2*r;add('madeira',v);txt=`+${fmt(v)} madeira`}}
    else if(d==='pedra'){const v=1.6*r;add('pedra',v);txt=`+${fmt(v)} pedras`}
-   else if(d==='culinaria'){const f=Math.min(S.res.frutas,2);S.res.frutas-=f;const v=f*(has('cozinha')?2:1.3)*Math.min(2,r);add('refeicoes',v);txt=`+${fmt(v)} refeições`}
+   else if(d==='culinaria'){const fr=S.res.frutas>=1,f=Math.min(fr?S.res.frutas:S.res.insetos,2);if(fr)S.res.frutas-=f;else S.res.insetos-=f;const v=f*(has('cozinha')?2:1.3)*Math.min(2,r);add('refeicoes',v);txt=fr?`+${fmt(v)} refeições`:`espetinho de inseto! +${fmt(v)} refeições`}
    else if(d==='ciencia'){const o=S.slimes.filter(x=>x!==s);if(o.length){const t=pick(o);gain(t,profOf(t)||'ciencia',.35*mult);txt=`ensinei algo a ${t.name}!`}else{gain(s,'ciencia',.2);txt='descobri algo!'}}
    else if(d==='arte'){const v=.7*r*(has('atelie')?2:1);add('arte',v);txt=`+${fmt(v)} arte`}
    else if(d==='saude'){if(has('enfermaria')&&S.res.ervas>=2&&Math.random()<.5){S.res.ervas-=2;add('remedios',1);txt='fiz um remédio!'}else{const v=1.3*r;add('ervas',v);txt=`+${fmt(v)} ervas`}}
@@ -173,15 +174,53 @@ function Engine(S){
   }
   for(const k in s.w)s.w[k]=Math.round(s.w[k]*100)/100;
  }
+ function spawnBugs(){
+  const n=S.slimes.length,cap=Math.min(20,4+n+Math.floor(treeCount/30));
+  for(const b of S.bugs)b.age++;
+  S.bugs=S.bugs.filter(b=>b.age<60);
+  if(S.bugs.length>=cap||Math.random()>.45)return;
+  let tw=0;for(const k in BUGS)tw+=BUGS[k].w;let x0=Math.random()*tw,k='grilo';for(const q in BUGS){x0-=BUGS[q].w;if(x0<=0){k=q;break}}
+  const bb=S.bounds;
+  for(let i=0;i<40;i++){
+   const x=bb.x0+1+Math.floor(Math.random()*(bb.x1-bb.x0-1)),y=bb.y0+1+Math.floor(Math.random()*(bb.y1-bb.y0-1));
+   if(T(x,y).t!=='G'||bAt.has(x+','+y))continue;
+   let ok=false;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1]]){const t=T(x+dx,y+dy);if(BUGS[k].water?(t.t==='W'):(t.t==='T')){ok=true;break}}
+   if(!ok)continue;
+   S.bugs.push({id:S.bugId++,k,x:Math.round((x+Math.random()*.6-.3)*100)/100,y:Math.round((y+Math.random()*.6-.3)*100)/100,age:0});return;
+  }
+ }
+ function hunt(s,last){
+  const h=home(s),cx=h?h.x:s.x,cy=h?h.y:s.y;
+  let bug=null,bd=1e9;for(const b of S.bugs){const d=Math.hypot(b.x-cx,b.y-cy)+Math.random()*6;if(d<bd){bd=d;bug=b}}
+  if(!bug)return false;
+  const K=BUGS[bug.k],sk=s.k.natureza||0,mult=has('biblioteca')?1.25:1;
+  if(last){s.x=Math.round((bug.x-.4)*100)/100;s.y=bug.y;s.task='caca'}
+  const p=Math.max(.12,Math.min(.92,.32+.55*sk/(sk+20)-K.ag*.6+level(s)*.01));
+  if(Math.random()<p){
+   S.bugs.splice(S.bugs.indexOf(bug),1);
+   const v=K.food*(1+Math.min(1,sk/80));add('insetos',v);
+   s.ok++;s.caught=(s.caught||0)+1;gain(s,'natureza',.12*mult);
+   if(last)s.say=`Peguei um ${K.n}! +${fmt(v)} de comida`;
+   if(s.caught===1||s.caught%15===0)log(s.caught===1?`${s.name} caçou o primeiro inseto: um ${K.n}!`:`${s.name} já caçou ${s.caught} insetos.`);
+  }else{
+   bug.x=Math.round((bug.x+Math.random()*2-1)*100)/100;bug.y=Math.round((bug.y+Math.random()*2-1)*100)/100;
+   s.err++;gain(s,'natureza',.2*mult);
+   if(last)s.say='Ops… '+K.f[0]+'.';
+   if(Math.random()<.5&&addFact(s,'natureza','Lição: '+K.f[1]))log(`${s.name} errou (“${K.f[0]}”) e aprendeu: ${K.f[1]}`);
+  }
+  return true;
+ }
  function step(last){
   const n=S.slimes.length,tools=1+Math.min(.5,(S.res.ferramentas||0)*.02);
-  const hungry=S.res.frutas+S.res.refeicoes<=0.01;
+  const hungry=S.res.frutas+S.res.refeicoes+S.res.insetos<=0.01;
+  spawnBugs();
+  const low=S.res.frutas+S.res.insetos+S.res.refeicoes*2<n*4;
   const M=tools*(hungry?.5:1+Math.min(.3,(S.res.arte||0)/200+(has('praca')?.1:0)+(S.res.remedios>1?.05:0)));
   add('frutas',.7*Math.min(n,fruitTrees/2+1)*(has('horta')?1.3:1)*M);
   add('madeira',.15*n*M);
   const nd=needs();
-  for(const s of S.slimes.slice())doTask(s,nd,last);
-  let need=.35*n;const meals=Math.min(S.res.refeicoes,need/2);S.res.refeicoes-=meals;need-=meals*2;S.res.frutas=Math.max(0,S.res.frutas-need);
+  for(const s of S.slimes.slice()){if(S.bugs.length&&Math.random()<(low?.35:.1)&&hunt(s,last))continue;doTask(s,nd,last)}
+  let need=.35*n;const meals=Math.min(S.res.refeicoes,need/2);S.res.refeicoes-=meals;need-=meals*2;const bi=Math.min(S.res.insetos,need*.5);S.res.insetos-=bi;need-=bi;S.res.frutas=Math.max(0,S.res.frutas-need);
   if(n>1&&Math.random()<.3){const a=pick(S.slimes),b=pick(S.slimes);if(a!==b){const[t,l]=level(a)>=level(b)?[a,b]:[b,a],d=profOf(t);if(d)gain(l,d,.3*(has('biblioteca')?1.25:1))}}
   if(has('viveiro')&&S.res.mudas>=1&&Math.random()<.3&&plantTree()){S.res.mudas-=1;log('Uma muda nova foi plantada na floresta.')}
   S.steps=(S.steps||0)+1;
