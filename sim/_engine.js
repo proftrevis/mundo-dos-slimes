@@ -308,19 +308,29 @@ function Engine(S){
  const vbonus=()=>Math.min(.8,S.buildings.reduce((a,b)=>a+((b.nv||1)-1)*.01+(b.type==='custom'?.01:0)+(b.type==='estabulo'?.02*(b.nv||1):0)+(b.type==='garagem'?.03*(b.nv||1):0),0)+(S.paths.length>=20?.05:0));
  // ---- construções inventadas a partir da conversa ----
  function ideaFrom(text){
-  const t=norm(text).replace(/[^a-z0-9 ]/g,' ');
-  const m=t.match(/\b(construir|construam|construa|construindo|fazer|facam|faca|criar|criem|crie|montar|montem|erguer|ergam|levantar|inventar)\s+(?:(?:um|uma|uns|umas|o|a|os|as|mais|novos?|novas?)\s+)*([a-z0-9 ]{3,60})/);
-  if(!m)return null;
-  const stop=new Set('para que com na no nas nos perto ao em porque pra pois aqui ali la entre sobre ate onde quando se mas muito bem bonito bonita grande pequeno pequena'.split(' '));
-  const ws=[];for(const w of m[2].trim().split(/\s+/)){if(stop.has(w))break;ws.push(w);if(ws.length>=4)break}
-  while(ws.length&&['de','da','do','das','dos','e'].includes(ws[ws.length-1]))ws.pop();
-  if(!ws.length||ws.join('').length<3)return null;
-  let nome=ws.join(' ');if(!safeText(nome))return null;
-  {const ow=String(text).split(/\s+/).map(w=>w.replace(/[^\p{L}\p{N}-]/gu,'')).filter(Boolean),nw=ow.map(w=>norm(w));for(let i=0;i<=nw.length-ws.length;i++){if(ws.every((w,j)=>nw[i+j]===w)){nome=ow.slice(i,i+ws.length).join(' ').toLowerCase();break}}}
-  for(const[k,b]of Object.entries(B)){if(k==='custom')continue;if(norm(b.n).split(' ').includes(ws[0])||(b.kw&&b.kw.split(' ').some(w=>ws.includes(w)))||k===ws[0])return{type:k,nome:b.n}}
-  if(/^(casa|casas|predio|predios|edificio|cabana)$/.test(ws[0]))return{type:/predio|edificio/.test(ws[0])?'predio':'casa',nome}
-  const kind=IDEAK.find(([k,re])=>re.test(nome))[0];
-  return{kind,nome:nome.charAt(0).toUpperCase()+nome.slice(1)};
+  const t=norm(text).replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ');
+  const sing=w=>w.length>4&&w.endsWith('s')?w.slice(0,-1):w;
+  const cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
+  const orig=ws=>{let nome=ws.join(' ');const ow=String(text).split(/\s+/).map(w=>w.replace(/[^\p{L}\p{N}-]/gu,'')).filter(Boolean),nw=ow.map(w=>norm(w));for(let i=0;i<=nw.length-ws.length;i++){if(ws.every((w,j)=>nw[i+j]===w)){nome=ow.slice(i,i+ws.length).join(' ').toLowerCase();break}}return nome};
+  const known=ws=>{const w0=sing(ws[0]);for(const[k,b]of Object.entries(B)){if(k==='custom')continue;const bn=norm(b.n).split(' ').map(sing);if(bn.includes(w0)||(b.kw&&b.kw.split(' ').map(sing).includes(w0))||k===w0)return{type:k,nome:b.n}}if(/^(casa|predio|edificio|cabana)$/.test(w0))return{type:w0==='predio'||w0==='edificio'?'predio':'cabana',nome:w0};return null};
+  // ruas e caminhos são reconhecidos mesmo sem verbo
+  const pm=t.match(/\b((?:ruas?|caminhos?|calcadas?|estradas?|trilhas?|passarelas?)(?: e (?:ruas?|caminhos?|calcadas?|estradas?|trilhas?))?(?: de (?:pedra|pedras|tijolo|tijolos|madeira|terra))?)\b/);
+  if(pm&&/(caminh|rua|calcad|estrad|trilh|passarel)/.test(pm[1])){const ws=pm[1].split(' ');if(!S.ideas.some(i=>i.kind==='caminho'))return{kind:'caminho',nome:cap(orig(ws))}}
+  const stop=new Set('para que com e na no nas nos perto ao em porque pra pois aqui ali la entre sobre ate onde quando se mas muito bem bonito bonita grande pequeno pequena alto alta'.split(' '));
+  const bad=new Set('tijolo tijolos madeira pedra pedras comida agua equipe equipes espaco espacos coisa coisas tudo algo isso isto melhor melhores amigos amigo voce voces ele ela parte trabalho tarefa sobre mais novo nova uns umas'.split(' '));
+  const re=/\b(construir|construam|construa|construindo|fazer|facam|faca|criar|criem|crie|montar|montem|erguer|ergam|levantar|inventar)\s+((?:(?:um|uma|uns|umas|o|a|os|as|mais|novos?|novas?|pequenos?|pequenas?|grandes?)\s+)*)([a-z0-9 ]{3,60})/g;
+  let m,fallback=null;
+  while((m=re.exec(t))){
+   const ws=[];for(const w of m[3].trim().split(/\s+/)){if(stop.has(w))break;ws.push(w);if(ws.length>=4)break}
+   while(ws.length&&['de','da','do','das','dos'].includes(ws[ws.length-1]))ws.pop();
+   if(!ws.length||ws.join('').length<3||bad.has(ws[0]))continue;
+   const nome=orig(ws);if(!safeText(nome))continue;
+   const k=known(ws);if(k)return k;
+   const kind=IDEAK.find(([k2,re2])=>re2.test(nome))[0];
+   if(kind!=='generico')return{kind,nome:cap(nome)};
+   if(!fallback)fallback={kind,nome:cap(nome)};
+  }
+  return fallback;
  }
  function teachIdea(s,author,text){
   const id=ideaFrom(text);if(!id)return null;
@@ -476,5 +486,6 @@ function Engine(S){
   if(nd[top]>0&&Math.random()<.6){d=top;why='porque a vila precisa'}else if(s.lastFail){d=s.lastFail;why='porque errou nisso'}else{d=profOf(s)||top;why='por curiosidade'}
   return{s,d,why,tema:TASK[d].topic,wiki:pick(WIKI[d])};
  }
+ if(!S.ideasScanned){S.ideasScanned=1;for(const x of S.slimes)for(const m of x.chat)if(m.r==='u'&&m.t&&safeText(m.t))teachIdea(x,m.a||'Visitante',m.t)}
  return{S,T,inB,isWet,home,has,needs,run,talk,clock:()=>clock(S.steps),learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
 }
