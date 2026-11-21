@@ -1,0 +1,12 @@
+// Junta os dados e o motor num único arquivo usado pela página e pela automação.
+const fs=require('fs'),path=require('path');
+const d=fs.readFileSync(path.join(__dirname,'_data.js'),'utf8'),e=fs.readFileSync(path.join(__dirname,'_engine.js'),'utf8');
+const out=`/* Gerado por sim/build-shared.js. Edite sim/_data.js e sim/_engine.js. */
+(function(root){
+${d}
+${e}
+const Mundo={DOMS,DK,RES,B,TASK,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,h2,vn,fbm,fmt};
+if(typeof module!=='undefined'&&module.exports)module.exports=Mundo;else root.Mundo=Mundo;
+})(typeof window!=='undefined'?window:globalThis);
+`;
+fs.writeFileSync(path.join(__dirname,'..','shared.js'),out);
