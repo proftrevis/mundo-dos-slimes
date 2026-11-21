@@ -18,6 +18,7 @@ const B={
  cabana:{n:'Cabana de madeira',home:1,lv:2,req:{construcao:8},cost:{madeira:12},d:'Uma casinha de verdade.'},
  casa:{n:'Casa de pedra',home:1,lv:3,req:{construcao:25,pedra:8},cost:{madeira:10,pedra:20},d:'Firme e quentinha.'},
  sobrado:{n:'Sobrado',home:1,lv:4,req:{construcao:60},cost:{madeira:25,pedra:30,tijolos:20},d:'Dois andares, com varanda.'},
+ casarao:{n:'Casarão',home:1,lv:5,req:{construcao:150},cost:{madeira:60,pedra:60,tijolos:50},d:'Casa grande com jardim, para slimes experientes.'},
  horta:{n:'Horta',req:{natureza:10},cost:{madeira:6},d:'+30% de frutas para todos.'},
  viveiro:{n:'Viveiro de mudas',req:{natureza:25},cost:{madeira:10,agua:10},d:'Planta árvores novas e aumenta a floresta.'},
  oficina:{n:'Oficina',req:{carpintaria:12},cost:{madeira:15},d:'Carpinteiros fazem ferramentas (+produção).'},
@@ -29,9 +30,16 @@ const B={
  cerca:{n:'Cerca de madeira',req:{defesa:10},cost:{madeira:15},d:'Dificulta a entrada dos bichos e diminui o estrago.'},
  fogueira:{n:'Fogueira e espantalho',req:{defesa:16},max:3,cost:{madeira:8,pedra:6},d:'Afasta os bichos: ataques ficam mais raros.'},
  torre:{n:'Torre de vigia',req:{defesa:28},max:2,cost:{madeira:20,pedra:12},d:'Avisa cedo e chama mais slimes para defender.'},
+ celeiro:{n:'Celeiro',req:{culinaria:40},max:2,cost:{madeira:60,pedra:40},d:'Guarda comida: as frutas estragam bem menos.'},
+ moinho:{n:'Moinho',req:{natureza:60},max:1,cost:{madeira:80,pedra:50},d:'Mói grãos: cozinheiros rendem 50% mais.'},
+ escola:{n:'Escola',req:{ciencia:60},max:1,cost:{madeira:80,pedra:60,tijolos:40},d:'Slimes novos nascem sabendo o dobro.'},
+ mercado:{n:'Mercado',req:{construcao:80},max:1,cost:{madeira:100,tijolos:80},d:'Troca o que sobra pelo que falta.'},
+ observatorio:{n:'Observatório',req:{ciencia:120},max:1,cost:{pedra:150,tijolos:100},d:'Estudam o céu: todos aprendem 15% mais.'},
+ ponte:{n:'Ponte',req:{construcao:120},max:1,cost:{madeira:200,pedra:100},d:'Liga as margens: a vila encontra espaço novo mais rápido.'},
+ farol:{n:'Farol',req:{defesa:80},max:1,cost:{pedra:200,tijolos:120},d:'Luz forte à noite: os bichos quase não chegam perto.'},
  praca:{n:'Praça',req:{arte:30},cost:{pedra:25},d:'Mais bem-estar para todo mundo.'}
 };
-const NAMES='Gotinha Bolha Anil Celeste Lume Pingo Safira Brisa Orvalho Neblina Cristal Marola Turquesa Índigo Lagoa Chuvisco Geleia Mirtilo Nuvem Riacho Cascata Seixo Garoa Azulão Fofura Musgo Pétala Bruma Sereno Tilápia Jujuba Pipoca Cacau Ameixa Ventinho'.split(' ');
+const NAMES='Gotinha Lírio Bambu Coral Faísca Pérola Cometa Estrela Trovão Aurora Luar Vagalume Sabiá Ipê Jabuti Caju Pitanga Acerola Jambo Graviola Maracujá Amora Framboesa Kiwi Melado Pudim Paçoca Quindim Brigadeiro Cocada Tapioca Mandioca Pequi Buriti Cajá Umbu Ingá Araçá Cambuci Jabuticaba Goiaba Manga Limão Hortelã Alecrim Sálvia Manjericão Canela Cravo Anis Gengibre Açafrão Baunilha Melissa Camomila Violeta Hortênsia Margarida Girassol Tulipa Orquídea Azaleia Begônia Bolha Anil Celeste Lume Pingo Safira Brisa Orvalho Neblina Cristal Marola Turquesa Índigo Lagoa Chuvisco Geleia Mirtilo Nuvem Riacho Cascata Seixo Garoa Azulão Fofura Musgo Pétala Bruma Sereno Tilápia Jujuba Pipoca Cacau Ameixa Ventinho'.split(' ');
 const ENC={
  natureza:['Árvores frutíferas precisam de abelhas para polinizar as flores.','Folhas caídas viram adubo e deixam o solo fértil.','Plantar mudas perto do riacho protege a margem da erosão.','A raiz das árvores segura a terra quando chove forte.','Frutas maduras podem guardar sementes para plantar de novo.'],
  construcao:['Uma boa fundação deixa a casa firme no chão.','Telhados inclinados deixam a chuva escorrer.','Argila misturada com palha vira tijolo quando seca ao sol.','Construir longe da margem do rio evita enchentes em casa.','Janelas viradas para o sol deixam a casa clara e quente.'],
