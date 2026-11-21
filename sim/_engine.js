@@ -12,6 +12,22 @@ function profOf(s){let best=null,bv=9.999;for(const d of DK)if((s.k[d]||0)>bv){b
 function profName(s){const d=profOf(s);if(!d)return'Explorador curioso';const v=s.k[d],p=DOMS[d].p;return v<30?'Aprendiz de '+p:v<80?p:'Mestre '+p}
 function detect(text){const t=' '+norm(text)+' ';const hits={};for(const d of DK)for(const w of DOMS[d].kws)if(t.includes(w))hits[d]=(hits[d]||0)+1;return hits}
 const pick=a=>a[Math.floor(Math.random()*a.length)];
+// --- segurança: limpa dados pessoais e palavrões, e barra temas impróprios ---
+const BAD=/\b(porra|caralh\w*|merda|puta\w*|foda\w*|fod[ea]r?|buceta|viad\w*|arrombad\w*|fdp|vtnc|pqp|cuzao|desgraçad\w*|otari\w*|idiota|imbecil|bost\w*)\b/gi;
+function clean(t){return String(t||'')
+ .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g,'[removido]')
+ .replace(/\b(?:https?:\/\/|www\.)\S+/gi,'[removido]')
+ .replace(/\b[\w-]+\.(?:com|net|org|br|io|me|gg|app|xyz)(?:\/\S*)?\b/gi,'[removido]')
+ .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g,'[removido]')
+ .replace(/@\w{2,}/g,'[removido]')
+ .replace(BAD,m=>m[0]+'*'.repeat(Math.max(2,m.length-1)))}
+const UNSAFE=/(morte|morre|mort[oa]s?\b|matou|matar|acidente|nuclear|radia|reator|guerra|bomba|arma\b|armas|assassin|homic|suic|crime|criminos|drog|sexo|sexual|estupr|terror|violen|tortur|massacre|explos|cadaver|evacua|abuso|sequestr|genocid|nazis|escrav|pornogr|alcool|cigarr|tabaco|aposta|cassino|politic|eleic|partido|religi|resid(uo|uos)\b)/;
+function safeText(t){return !UNSAFE.test(norm(t))}
+const STOP=new Set('para como porque quando onde qual quais quanto quantos quem voce voces sobre isso essa esse esta este aqui tudo muito mais menos pode podem fazer sabe saber tem tinha uma umas uns dos das nos nas com sem por que ele ela eles elas meu minha seu sua sim nao entao tambem ainda'.split(' '));
+const words=t=>norm(t).replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>3&&!STOP.has(w));
+// --- relógio do mundo: um dia = 300 passos (1 hora real) e cada estação dura 7 dias ---
+const DAYSTEPS=300,SEASONS=[{n:'Primavera',i:'🌸',fr:1.1,bug:1.3},{n:'Verão',i:'☀️',fr:1.25,bug:1.2},{n:'Outono',i:'🍂',fr:.8,bug:.9},{n:'Inverno',i:'❄️',fr:.35,bug:.35}];
+function clock(steps){const st=(steps||0)+DAYSTEPS*8/24,day=Math.floor(st/DAYSTEPS)+1,hour=(st%DAYSTEPS)/DAYSTEPS*24,si=Math.floor((day-1)/7)%4;return{day,hour,si,season:SEASONS[si],night:hour<6||hour>=19,dayOfSeason:(day-1)%7+1}}
 
 function newState(){
  const now=Date.now();
@@ -24,6 +40,8 @@ function newState(){
 }
 
 function Engine(S){
+ S.queue=S.queue||[];if(S.seasonIdx===undefined)S.seasonIdx=clock(S.steps).si;
+ for(const x of S.slimes){x.facts=x.facts.filter(f=>safeText(f.f));x.chat=x.chat.filter(m=>m.r==='u'||safeText(m.t))}
  S.bugs=S.bugs||[];S.threat=S.threat||0;S.alerta=S.alerta||0;if(S.pred===undefined)S.pred=null;S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
  const plantedSet=new Set(S.planted.map(p=>p[0]+','+p[1]));
  const tcache=new Map(),bAt=new Map();
@@ -128,6 +146,7 @@ function Engine(S){
   if(r.agua<10)nd.agua+=.8;
   if(r.frutas>20&&r.refeicoes<n*2)nd.culinaria+=.8;
   if(S.slimes.some(x=>{const h=home(x);return!h||B[h.type].lv<2}))nd.construcao+=1;
+  {const ck=clock(S.steps);if(ck.si===2){nd.culinaria+=1.5;nd.natureza+=.5}if(ck.si===3&&r.frutas+r.refeicoes<n*8)nd.culinaria+=1}
   if(S.threat>0)nd.defesa+=Math.min(3,S.threat);if(S.pred)nd.defesa+=2;
   if(n>=3){const cov=new Set(S.slimes.map(profOf));for(const d of DK)if(!cov.has(d))nd[d]+=1}
   return nd;
@@ -180,8 +199,10 @@ function Engine(S){
   const n=S.slimes.length,cap=Math.min(20,4+n+Math.floor(treeCount/30));
   for(const b of S.bugs)b.age++;
   S.bugs=S.bugs.filter(b=>b.age<60);
-  if(S.bugs.length>=cap||Math.random()>.45)return;
-  let tw=0;for(const k in BUGS)tw+=BUGS[k].w;let x0=Math.random()*tw,k='grilo';for(const q in BUGS){x0-=BUGS[q].w;if(x0<=0){k=q;break}}
+  const ck=clock(S.steps);
+  if(S.bugs.length>=cap*Math.min(1,ck.season.bug)||Math.random()>.45*ck.season.bug)return;
+  const bw=q=>BUGS[q].w*(BUGS[q].fly?(ck.night?3:.6):(ck.night?.5:1));
+  let tw=0;for(const k in BUGS)tw+=bw(k);let x0=Math.random()*tw,k='grilo';for(const q in BUGS){x0-=bw(q);if(x0<=0){k=q;break}}
   const bb=S.bounds;
   for(let i=0;i<40;i++){
    const x=bb.x0+1+Math.floor(Math.random()*(bb.x1-bb.x0-1)),y=bb.y0+1+Math.floor(Math.random()*(bb.y1-bb.y0-1));
@@ -221,7 +242,7 @@ function Engine(S){
  }
  function predSpawn(){
   const n=S.slimes.length;
-  let ch=.0025*(1+Math.min(n,24)/12);if(has('fogueira'))ch*=.55;
+  const nt=clock(S.steps).night;let ch=.0025*(1+Math.min(n,24)/12)*(nt?1.8:.6);if(has('fogueira'))ch*=nt?.4:.7;
   if(Math.random()>ch)return;
   const ks=Object.keys(PRED).filter(k=>n>=PRED[k].minN);let tw=0;for(const k of ks)tw+=PRED[k].w;let x=Math.random()*tw,k=ks[0];for(const q of ks){x-=PRED[q].w;if(x<=0){k=q;break}}
   const e=predEdge();if(!e)return;
@@ -267,31 +288,73 @@ function Engine(S){
   S.alerta*=.97;S.threat=Math.max(0,S.threat-.004);
   let busy=[];if(S.pred)busy=predStep(last)||[];else predSpawn();
   const low=S.res.frutas+S.res.insetos+S.res.refeicoes*2<n*4;
-  const M=tools*(hungry?.5:1+Math.min(.3,(S.res.arte||0)/200+(has('praca')?.1:0)+(S.res.remedios>1?.05:0)));
-  add('frutas',.7*Math.min(n,fruitTrees/2+1)*(has('horta')?1.3:1)*M);
+  const ck=clock(S.steps);
+  if(ck.si!==S.seasonIdx){S.seasonIdx=ck.si;log(['A primavera chegou! Flores por toda parte e muitos insetos voando.','Chegou o verão: as árvores estão carregadas de frutas.','O outono chegou: as folhas caem e os slimes começam a guardar comida para o inverno.','O inverno chegou: as árvores quase não dão frutas. Hora de usar a comida guardada!'][ck.si])}
+  const M=(ck.night?.6:1)*tools*(hungry?.5:1+Math.min(.3,(S.res.arte||0)/200+(has('praca')?.1:0)+(S.res.remedios>1?.05:0)));
+  add('frutas',.7*Math.min(n,fruitTrees/2+1)*(has('horta')?1.3:1)*M*ck.season.fr);
+  S.res.frutas*=ck.si===1?.9993:.9996;
   add('madeira',.15*n*M);
   const nd=needs();
   for(const s of S.slimes.slice()){if(busy.includes(s))continue;if(s.scared>0){s.scared--;if(last){s.task=null;if(!s.say||!/medo/.test(s.say))s.say='Ainda estou com um pouquinho de medo…'}continue}if(S.bugs.length&&Math.random()<(low?.35:.1)&&hunt(s,last))continue;doTask(s,nd,last)}
-  let need=.35*n;const meals=Math.min(S.res.refeicoes,need/2);S.res.refeicoes-=meals;need-=meals*2;const bi=Math.min(S.res.insetos,need*.5);S.res.insetos-=bi;need-=bi;S.res.frutas=Math.max(0,S.res.frutas-need);
+  let need=.35*n*(ck.si===3?1.15:1);const meals=Math.min(S.res.refeicoes,need/2);S.res.refeicoes-=meals;need-=meals*2;const bi=Math.min(S.res.insetos,need*.5);S.res.insetos-=bi;need-=bi;S.res.frutas=Math.max(0,S.res.frutas-need);
   if(n>1&&Math.random()<.3){const a=pick(S.slimes),b=pick(S.slimes);if(a!==b){const[t,l]=level(a)>=level(b)?[a,b]:[b,a],d=profOf(t);if(d)gain(l,d,.3*(has('biblioteca')?1.25:1))}}
+  if(hungry&&ck.si===3&&Math.random()<.05){const x=pick(S.slimes);if(addFact(x,'culinaria','Lição: Guardar comida no outono ajuda a passar o inverno.'))log(`${x.name} sentiu fome no inverno e aprendeu: guardar comida no outono ajuda a passar o inverno.`)}
   if(has('viveiro')&&S.res.mudas>=1&&Math.random()<.3&&plantTree()){S.res.mudas-=1;log('Uma muda nova foi plantada na floresta.')}
   S.steps=(S.steps||0)+1;
   if(S.steps%3===0){autoBuild();checkExpand()}
  }
  function run(steps){for(let i=0;i<steps;i++)step(i===steps-1);for(const k in S.res)S.res[k]=Math.round(Math.max(0,S.res[k])*100)/100}
+ function answer(s,text){
+  const t=norm(text).trim(),n=S.slimes.length,ck=clock(S.steps),r=S.res;
+  const isQ=/\?\s*$/.test(text.trim())||/^(o que|oque|como|por que|porque|pq|quem|onde|quando|qual|quais|quanto|sera|voce sabe|me (diz|fala|conta))\b/.test(t);
+  if(isQ&&/(email|e-mail|telefone|celular|whats|endereco|onde (ele|ela|fulano|voce)? ?mora|senha|cpf|\bip\b|\buid\b|quem (te )?(falou|disse|mandou|escreveu|conversou)|quem esteve|outras pessoas|outros visitantes|nome (dele|dela|de quem)|dados)/.test(t))
+   return 'Isso eu não conto! O que os visitantes falam comigo e os dados de cada um ficam bem guardadinhos. Mas posso contar coisas da floresta!';
+  if(/^(oi+|ola|ole|eai|e ai|bom dia|boa tarde|boa noite|hey|salve)\b/.test(t)&&t.length<25)
+   return `Oi! Eu sou ${s.name}, ${profName(s).toLowerCase()} de nível ${level(s)}. ${ck.night?'Está de noite aqui, mas ainda estou acordadinho.':'Que bom te ver por aqui!'} Quer saber o que estou fazendo ou o que já aprendi?`;
+  if(/(tudo bem|como (voce )?(esta|vai)|ta bem|como se sente)/.test(t)){
+   const food=r.frutas+r.insetos+r.refeicoes*2,hung=food<n*2;
+   return s.scared>0?'Ainda estou um pouquinho assustado com o último bicho que apareceu… mas já vai passar!':S.pred?`Estou atento! ${PRED[S.pred.k].art[0].toUpperCase()+PRED[S.pred.k].art.slice(1)} ${PRED[S.pred.k].n} está rondando a vila.`:hung?'Estou com um pouco de fome. A vila precisa de mais comida!':'Estou ótimo! A barriga está cheia e a vila está tranquila.';
+  }
+  if(/(seu nome|quem (e|eh) voce|quem voce e|voce e quem)/.test(t))return `Eu sou ${s.name}! Sou ${profName(s).toLowerCase()}, estou no nível ${level(s)} e já juntei ${fmt(total(s))} de conhecimento.`;
+  if(/(fazendo|trabalhando|ocupad)/.test(t))return s.task&&TASK[s.task]?`Agora estou ${TASK[s.task].v}. Já tive ${s.ok} acertos e ${s.err} erros, e aprendi com todos!`:'Estou descansando um pouquinho.';
+  if(/(quantos slimes|quantos voces|quantos sao|quantos tem)/.test(t))return `Somos ${n} slimes na vila: ${S.slimes.slice(0,6).map(x=>x.name).join(', ')}${n>6?' e mais alguns':''}.`;
+  if(/(estacao|que dia|que horas|hora|noite|frio|calor|inverno|verao|outono|primavera)/.test(t)&&!/(como|por que|porque)/.test(t))
+   return `Aqui é ${ck.season.n.toLowerCase()}, dia ${ck.day} do mundo, por volta das ${Math.floor(ck.hour)}h. ${['Tem flores e insetos por toda parte!','As árvores estão carregadas de frutas!','Estamos guardando comida para o inverno.','Faz frio e quase não tem frutas, então usamos a comida guardada.'][ck.si]}`;
+  if(/(perigo|lobo|raposa|javali|bicho|ataque|defesa|proteg)/.test(t)&&/\?|como|tem|esta|vai/.test(t)){
+   const pro=['cerca','fogueira','torre'].filter(has).map(x=>B[x].n.toLowerCase());
+   return (S.pred?`Cuidado, ${PRED[S.pred.k].art} ${PRED[S.pred.k].n} está perto da vila agora! `:'Agora está tudo calmo. ')+(pro.length?`Nós já temos ${pro.join(', ')} para nos proteger.`:'Ainda não temos proteções, mas os guardiões estão aprendendo.');
+  }
+  if(/(precisa|falta|necessita)/.test(t)){const nd=needs(),top=DK.slice().sort((a,b)=>nd[b]-nd[a])[0];return nd[top]>0?`A vila está precisando de mais ${DOMS[top].n.toLowerCase()}. Se você souber algo sobre isso, me ensina!`:'A vila está bem servida agora. Mas sempre dá para aprender mais!'}
+  if(/(o que (voce )?(sabe|aprendeu)|me (conta|ensina) (algo|alguma)|curiosidade)/.test(t)){const f=pick(s.facts.filter(x=>x.src||/^Lição/.test(x.f))||[]);return f?`Uma coisa que eu aprendi: ${f.f.replace(/^Lição: /,'')}`:`Sei que ${pick(ENC[profOf(s)||'natureza'])[0].toLowerCase()+pick(ENC[profOf(s)||'natureza']).slice(1)}`}
+  if(!isQ)return null;
+  // procura no que a vila sabe (só fatos pesquisados, lições e saberes da floresta; nunca o que outros visitantes escreveram)
+  const q=words(text);if(!q.length)return null;
+  let best=null,bs=0;
+  const consider=(f,who)=>{const w=new Set(words(f));let sc=0;for(const x of q)if(w.has(x)||[...w].some(y=>y.length>4&&(y.startsWith(x.slice(0,5))||x.startsWith(y.slice(0,5)))))sc++;if(sc>bs){bs=sc;best={f,who}}};
+  for(const x of S.slimes)for(const f of x.facts)if((f.src||/^Lição/.test(f.f))&&safeText(f.f))consider(f.f.replace(/^Lição: /,''),x===s?null:x.name);
+  for(const d of DK)for(const f of ENC[d])consider(f,null);
+  if(best&&bs>=Math.min(2,q.length))return best.who?`Hmm, ${best.who} me contou uma coisa sobre isso: ${best.f}`:`Eu sei! ${best.f}`;
+  const tema=clean(text).replace(/[?!.]+$/,'').slice(0,80);
+  if(S.queue.length<6&&safeText(tema)&&!S.queue.some(x=>x.tema===tema))S.queue.push({slime:s.id,tema});
+  return safeText(tema)?`Ainda não sei responder isso… Vou pesquisar e te conto aqui no chat quando descobrir!`:'Hmm, esse assunto não é para slimes. Vamos falar da floresta, da vila ou de como construir coisas?';
+ }
  function talk(s,author,text){
+  BAD.lastIndex=0;const rude=BAD.test(text);BAD.lastIndex=0;const raw=String(text||'');
+  text=clean(text).slice(0,400);const scrubbed=text.includes('[removido]')&&!raw.includes('[removido]');author=clean(author).slice(0,24)||'Visitante';
+  pushChat(s,{r:'u',t:text,a:author});
+  const g0=total(s),mult=has('biblioteca')?1.25:1;
+  let reply=rude?'Opa, vamos conversar com gentileza? Slimes ficam tristinhos com palavras feias.':safeText(text)?answer(s,text):'Hmm, esse assunto não é para slimes. Vamos falar da floresta, da vila ou de como construir coisas?';
   const hits=detect(text),ds=Object.keys(hits).sort((a,b)=>hits[b]-hits[a]);
-  pushChat(s,{r:'u',t:text.slice(0,400),a:author});
-  let reply,g0=total(s);
-  const mult=has('biblioteca')?1.25:1;
-  if(!ds.length){reply=pick(['Hihi, que legal conversar com você! Me ensina alguma coisa sobre a floresta, a água ou como construir uma casinha?','Hmm… não entendi tudo, mas gostei! Você sabe como as árvores dão frutas?','Eu adoro ouvir você! O que mais você sabe fazer?']);gain(s,profOf(s)||pick(DK),.5)}
+  if(reply){if(ds.length)gain(s,ds[0],.5*mult);else gain(s,profOf(s)||pick(DK),.3)}
+  else if(!ds.length){reply=pick(['Hihi, que legal conversar com você! Me ensina alguma coisa sobre a floresta, a água ou como construir uma casinha?','Hmm… não entendi tudo, mas gostei! Você sabe como as árvores dão frutas?','Eu adoro ouvir você! Pode me perguntar coisas também, tipo o que estou fazendo ou o que a vila precisa.']);gain(s,profOf(s)||pick(DK),.5)}
   else{
    const f=text.trim().replace(/\s+/g,' ');
-   reply=`Uau, ${author}! Então ${f.length>90?f.slice(0,90)+'…':f.charAt(0).toLowerCase()+f.slice(1)}${/[.!?]$/.test(f)?'':'!'} Vou guardar isso na minha gelatina e praticar! Me conta mais sobre ${DOMS[ds[0]].n.toLowerCase()}?`;
+   reply=`Que legal, ${author}! Vou guardar isso na minha gelatina e praticar: “${f.length>90?f.slice(0,90)+'…':f}”. Me conta mais sobre ${DOMS[ds[0]].n.toLowerCase()}?`;
    addFact(s,ds[0],f.slice(0,200));
    gain(s,ds[0],Math.min(5,1+ds.reduce((a,d)=>a+hits[d],0)+(f.length>60?1:0))*mult);
    s.focus={d:ds[0],n:12};s.w[ds[0]]=(s.w[ds[0]]||1)+1.5;
   }
+  if(scrubbed)reply+=' (Tirei da conversa os contatos e dados pessoais que você escreveu, para te proteger.)';
   const g=total(s)-g0;
   pushChat(s,{r:'s',t:reply,g:g>0?`+${fmt(g)} de conhecimento`:''});
   log(`${author} conversou com ${s.name}.`);
@@ -319,5 +382,5 @@ function Engine(S){
   if(nd[top]>0&&Math.random()<.6){d=top;why='porque a vila precisa'}else if(s.lastFail){d=s.lastFail;why='porque errou nisso'}else{d=profOf(s)||top;why='por curiosidade'}
   return{s,d,why,tema:TASK[d].topic,wiki:pick(WIKI[d])};
  }
- return{S,T,inB,isWet,home,has,needs,run,talk,learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
+ return{S,T,inB,isWet,home,has,needs,run,talk,clock:()=>clock(S.steps),learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
 }

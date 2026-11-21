@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>Mundo dos Slimes</title>
 <meta name="description" content="Um mundo vivo de slimes que aprendem, trabalham e constroem sozinhos.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,7 +91,29 @@ h3{margin:4px 0 0;font-size:18px;line-height:1.1}
 .prog span{display:block;height:100%;background:linear-gradient(90deg,#5fb6ff,#2f8cf0)}
 .note{font-size:13px;color:var(--muted)}
 .autow{display:flex;gap:8px;align-items:center;cursor:pointer;flex:none}.autow input{width:20px;height:20px;accent-color:var(--slime);flex:none}
-@media(max-width:900px){main{grid-template-columns:1fr;grid-template-rows:56vh auto}aside{border-left:0;border-top:1px solid var(--line)}.pane{max-height:none}#chat{max-height:46vh}}
+@media(max-width:900px){
+ html,body{height:100vh;height:100dvh;overflow:hidden}
+ header{padding:6px 12px;gap:2px 12px}header h1{font-size:20px}.stats{font-size:12.5px;gap:2px 10px}.live{display:none}
+ main{grid-template-columns:1fr;grid-template-rows:minmax(0,36%) minmax(0,1fr);transition:grid-template-rows .25s}
+ body.mapbig main{grid-template-rows:minmax(0,72%) minmax(0,1fr)}
+ body.typing main{grid-template-rows:minmax(0,18%) minmax(0,1fr)}
+ .stage{min-height:0}
+ aside{border-left:0;border-top:1px solid var(--line);min-height:0;overflow:hidden}
+ .tab{min-height:42px;font-size:14.5px}
+ .pane{padding:8px 12px calc(8px + env(safe-area-inset-bottom));gap:8px}
+ #p-chat.on{gap:8px;overflow:hidden}
+ .who canvas{width:40px;height:40px}.who h2{font-size:19px}.who p{font-size:12.5px}
+ #chat{flex:1;min-height:60px;max-height:none;overscroll-behavior:contain}
+ .msg{font-size:15px}
+ #how{display:none}
+ .hud button{width:42px;min-height:42px}
+ .hud #mapsize{display:block}
+ .stats .opt{display:none}
+}
+#mapsize{display:none}
+.composer{display:flex;flex-direction:column;gap:8px;flex:none}
+.composer .row input#nick{max-width:none}
+@media(max-width:900px){.composer .row:first-child{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}}
 @media(prefers-reduced-motion:reduce){#toast{transition:none}}
 .live{font-size:13px;color:#cfe5c8}
 .msg.pend{opacity:.75}
@@ -115,6 +137,7 @@ a{color:var(--slime)}
       <button id="zin" aria-label="Aproximar">+</button>
       <button id="zout" aria-label="Afastar">−</button>
       <button id="zhome" aria-label="Voltar ao slime selecionado">◎</button>
+      <button id="mapsize" aria-label="Aumentar ou diminuir o mapa">⤢</button>
     </div>
     <div id="loading">Acordando a floresta…</div>
   </section>
@@ -129,9 +152,11 @@ a{color:var(--slime)}
       <div class="chips" id="chips"></div>
       <div class="who"><canvas id="face" width="112" height="112"></canvas><div><h2 id="wname"></h2><p id="wprof"></p></div></div>
       <div id="chat" aria-live="polite"></div>
-      <div class="row"><input type="text" id="nick" placeholder="Seu nome" maxlength="24" aria-label="Seu nome" style="max-width:12em"></div>
-      <form id="f"><input type="text" id="msg" placeholder="Ensine algo ao slime…" autocomplete="off" maxlength="400"><button class="btn" id="send">Enviar</button></form>
+      <div class="composer">
+      <div class="row"><input type="text" id="nick" placeholder="Seu nome" maxlength="24" aria-label="Seu nome" style="max-width:12em"><button class="btn ghost" id="moreopt" type="button" aria-expanded="false" style="display:none">Pesquisa</button></div>
+      <form id="f"><input type="text" id="msg" placeholder="Pergunte ou ensine algo ao slime…" autocomplete="off" maxlength="400"><button class="btn" id="send">Enviar</button></form>
       <div class="row"><input type="text" id="topic" placeholder="Tema para ele pesquisar" maxlength="80"><button class="btn alt" id="research" type="button">Pedir pesquisa</button></div>
+      </div>
       <p class="mind" id="how">Este mundo é um só para todo mundo e continua vivo mesmo com a página fechada.</p>
     </div>
     <div class="pane" id="p-slime"></div>
@@ -294,6 +319,32 @@ function drawPred(P,tm){
  const pulse=.6+.4*Math.sin(tm/200);ctx.fillStyle=`rgba(230,57,70,${pulse})`;ctx.beginPath();ctx.arc(x,y-s*1.55,Math.max(9,s*.22),0,7);ctx.fill();
  ctx.fillStyle='#fff';ctx.font=`800 ${Math.max(10,s*.3)}px sans-serif`;ctx.textAlign='center';ctx.fillText('!',x,y-s*1.55+Math.max(4,s*.1));ctx.textAlign='left';
 }
+const worldClock=()=>Mu.clock((S.steps||0)+Math.max(0,(Date.now()-S.last)/12000));
+function darkness(h){if(h>=7&&h<17.5)return 0;if(h>=17.5&&h<20)return (h-17.5)/2.5*.62;if(h>=5&&h<7)return (7-h)/2*.62;return .62}
+const lc=document.createElement('canvas'),lx=lc.getContext('2d');const parts=[];
+const TINT=['rgba(255,190,220,.05)','rgba(255,225,120,.07)','rgba(225,120,30,.13)','rgba(225,238,255,.24)'];
+function drawSky(tm,dt){
+ const ck=worldClock(),z=cam.z*TS;
+ ctx.fillStyle=TINT[ck.si];ctx.fillRect(0,0,W,H);
+ // folhas no outono e neve no inverno
+ if(ck.si>=2){const want=ck.si===3?70:28;while(parts.length<want)parts.push({x:Math.random()*W,y:Math.random()*H,v:20+Math.random()*30,ph:Math.random()*6,c:ck.si===3?'#fff':['#e8833a','#d9a21b','#b5522b'][parts.length%3]});
+  if(parts.length>want)parts.length=want;
+  for(const p of parts){p.y+=p.v*dt;p.x+=Math.sin(tm/700+p.ph)*12*dt;if(p.y>H){p.y=-5;p.x=Math.random()*W}ctx.fillStyle=p.c;ctx.globalAlpha=ck.si===3?.85:.9;ctx.beginPath();if(ck.si===3)ctx.arc(p.x,p.y,1.8,0,7);else ctx.ellipse(p.x,p.y,3.2,1.8,Math.sin(tm/400+p.ph),0,7);ctx.fill()}ctx.globalAlpha=1}else parts.length=0;
+ const a=darkness(ck.hour);if(a<=0)return;
+ if(lc.width!==cv.width||lc.height!==cv.height){lc.width=cv.width;lc.height=cv.height}
+ lx.setTransform(DPR,0,0,DPR,0,0);lx.globalCompositeOperation='source-over';lx.clearRect(0,0,W,H);lx.fillStyle=`rgba(8,16,48,${a})`;lx.fillRect(0,0,W,H);
+ lx.globalCompositeOperation='destination-out';
+ const lights=[];
+ for(const b of S.buildings){const T0=B[b.type];if(!T0)continue;const r=b.type==='fogueira'?3.2:b.type==='torre'?1.6:b.type==='ninho'?0:T0.home?1.3:1;if(r)lights.push([b.x+.5,b.y+.5,r,b.type==='fogueira'])}
+ for(const b of S.bugs||[])if(b.k==='vagalume')lights.push([b.x+.5,b.y+.3,.8,false]);
+ for(const s2 of S.slimes){const v=V[s2.id];lights.push([v.x+.5,v.y+.4,.55,false])}
+ for(const[x,y,r,f]of lights){const px=sx(x),py=sy(y),R=r*z*(f?1+.04*Math.sin(tm/90):1);if(px<-R||px>W+R||py<-R||py>H+R)continue;const g=lx.createRadialGradient(px,py,0,px,py,R);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.5,'rgba(0,0,0,.6)');g.addColorStop(1,'rgba(0,0,0,0)');lx.fillStyle=g;lx.beginPath();lx.arc(px,py,R,0,7);lx.fill()}
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(lc,0,0);ctx.restore();ctx.setTransform(DPR,0,0,DPR,0,0);
+ ctx.globalCompositeOperation='lighter';
+ for(const[x,y,r,f]of lights){if(!f&&r<.9&&r!==.8)continue;const px=sx(x),py=sy(y),R=r*z*.8;const g=ctx.createRadialGradient(px,py,0,px,py,R);g.addColorStop(0,`rgba(255,${f?150:220},${f?60:120},${.28*a})`);g.addColorStop(1,'rgba(255,200,100,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,R,0,7);ctx.fill()}
+ ctx.globalCompositeOperation='source-over';
+ if(a>.4){ctx.fillStyle='rgba(255,255,255,.7)';for(let i=0;i<30;i++){const x=(h2(i,7,1)*W),y=h2(i,9,2)*H*.35;if(Math.sin(tm/600+i)>.3)ctx.fillRect(x,y,1.5,1.5)}}
+}
 function bubble(x,y,text){
  ctx.font=`600 ${Math.max(12,Math.min(15,11*cam.z))}px "Baloo 2",sans-serif`;
  const words=text.length>90?text.slice(0,88)+'…':text,lines=[];let cur='';
@@ -330,6 +381,7 @@ function frame(tm){
  for(const s of S.slimes){const v=V[s.id];objs.push({y:v.y+.6,f:()=>{const r=z*.34*(.75+Math.min(.45,level(s)*.05));drawSlimeAt(ctx,sx(v.x+.5),sy(v.y+.6),r,s.hue,tm,v.ph,v.moving,s.id===selId);
   if(cam.z>1||s.id===selId){ctx.font=`700 ${Math.max(11,10*cam.z)}px "Baloo 2",sans-serif`;ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillText(s.name,sx(v.x+.5)+1,sy(v.y+.6)+r*.55+12);ctx.fillStyle='#fff';ctx.fillText(s.name,sx(v.x+.5),sy(v.y+.6)+r*.55+11);ctx.textAlign='left'}}})}
  objs.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
+ drawSky(tm,dt);
  const b=S.bounds;ctx.fillStyle='rgba(10,25,15,.55)';ctx.beginPath();ctx.rect(0,0,W,H);ctx.rect(sx(b.x0+1),sy(b.y0+1),(b.x1-b.x0-1)*z,(b.y1-b.y0-1)*z);ctx.fill('evenodd');
  ctx.strokeStyle='rgba(255,255,255,.18)';ctx.setLineDash([6,6]);ctx.strokeRect(sx(b.x0+1),sy(b.y0+1),(b.x1-b.x0-1)*z,(b.y1-b.y0-1)*z);ctx.setLineDash([]);
  for(const s of S.slimes){const v=V[s.id];if(v.say&&v.say.until>tm&&(v.say.from||0)<=tm){const r=z*.34*(.75+Math.min(.45,level(s)*.05));bubble(sx(v.x+.5),sy(v.y+.6)-r*1.8,v.say.t)}}
@@ -368,7 +420,7 @@ const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'agora mesmo':m===1?'há 1 minuto':m<60?`há ${m} minutos`:`há ${Math.round(m/60)} h`};
 function renderStats(){
  const area=(S.bounds.x1-S.bounds.x0-1)*(S.bounds.y1-S.bounds.y0-1),homes=S.buildings.filter(b=>B[b.type].home).length;
- $('#stats').innerHTML=`<span><b>${S.slimes.length}</b> slimes</span><span><b>${homes}</b> moradias</span><span><b>${S.buildings.length-homes}</b> construções</span><span><b>${E.treeCount}</b> árvores</span><span><b>${(S.bugs||[]).length}</b> insetos</span>${S.pred&&PRED[S.pred.k]?`<span style="color:#ff8a8a">⚠ <b>${PRED[S.pred.k].n}</b> perto da vila</span>`:''}<span><b>${S.planted.length}</b> plantadas</span><span>área <b>${area}</b> lotes</span>`;
+ $('#stats').innerHTML=`<span><b>${S.slimes.length}</b> slimes</span><span class="opt"><b>${homes}</b> moradias</span><span class="opt"><b>${S.buildings.length-homes}</b> construções</span><span>${(()=>{const c=worldClock();return `${c.season.i} <b>${c.season.n}</b> · dia ${c.day} · ${c.night?'🌙':'☀️'} ${String(Math.floor(c.hour)).padStart(2,'0')}h`})()}</span><span class="opt"><b>${E.treeCount}</b> árvores</span><span><b>${(S.bugs||[]).length}</b> insetos</span>${S.pred&&PRED[S.pred.k]?`<span style="color:#ff8a8a">⚠ <b>${PRED[S.pred.k].n}</b> perto da vila</span>`:''}<span class="opt"><b>${S.planted.length}</b> plantadas</span><span class="opt">área <b>${area}</b> lotes</span>`;
  $('#live').textContent=`Vivo desde ${new Date(S.created).toLocaleDateString('pt-BR')} · atualizado ${ago(S.last)}`;
 }
 function renderChips(){$('#chips').innerHTML=S.slimes.map(s=>`<button class="chip" data-id="${s.id}" aria-pressed="${s.id===selId}"><i style="background:hsl(${s.hue} 75% 58%)"></i>${esc(s.name)} <small>nv ${level(s)}</small></button>`).join('')}
@@ -441,6 +493,17 @@ $('#f').onsubmit=async e=>{e.preventDefault();const v=$('#msg').value.trim();if(
 $('#research').onclick=async()=>{const v=$('#topic').value.trim();if(!v){toast('Escreva um tema para pesquisar.');return}$('#topic').value='';if(FB.on)await sendFB(v,'pesquisa');else openIssue(`Pesquisa para ${sel().name}`,v,'pesquisa')};
 initFirebase();
 setInterval(()=>{if(S)renderStats()},30000);
+{const mob=matchMedia('(max-width:900px)'),rrow=$('#topic').parentElement,mo=$('#moreopt');
+ const apply=()=>{mo.style.display=mob.matches?'':'none';rrow.style.display=mob.matches&&mo.getAttribute('aria-expanded')!=='true'?'none':''};
+ mo.onclick=()=>{mo.setAttribute('aria-expanded',mo.getAttribute('aria-expanded')==='true'?'false':'true');apply()};
+ mob.addEventListener('change',apply);apply();
+ $('#mapsize').onclick=()=>{document.body.classList.toggle('mapbig');setTimeout(resize,300)};
+ for(const el of [$('#msg'),$('#topic'),$('#nick')]){
+  el.addEventListener('focus',()=>{if(mob.matches){document.body.classList.remove('mapbig');document.body.classList.add('typing');setTimeout(()=>{resize();const c=$('#chat');c.scrollTop=c.scrollHeight;el.scrollIntoView({block:'nearest'})},320)}});
+  el.addEventListener('blur',()=>{setTimeout(()=>{if(!document.activeElement||!['msg','topic','nick'].includes(document.activeElement.id)){document.body.classList.remove('typing');setTimeout(resize,300)}},150)});
+ }
+ if(window.visualViewport)visualViewport.addEventListener('resize',()=>setTimeout(resize,50));
+}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
 requestAnimationFrame(frame);
 load().then(schedule);

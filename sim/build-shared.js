@@ -5,7 +5,7 @@ const out=`/* Gerado por sim/build-shared.js. Edite sim/_data.js e sim/_engine.j
 (function(root){
 ${d}
 ${e}
-const Mundo={DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,h2,vn,fbm,fmt};
+const Mundo={DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,clean,safeText,clock,SEASONS,DAYSTEPS,words,h2,vn,fbm,fmt};
 if(typeof module!=='undefined'&&module.exports)module.exports=Mundo;else root.Mundo=Mundo;
 })(typeof window!=='undefined'?window:globalThis);
 `;

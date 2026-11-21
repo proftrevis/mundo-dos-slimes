@@ -17,7 +17,12 @@ async function wiki(q,s,d){
   const ex=await get('action=query&prop=extracts&exintro=1&explaintext=1&pageids='+hit.pageid);
   const pg=Object.values((ex.query&&ex.query.pages)||{})[0];if(!pg)continue;
   const txt=(pg.extract||'').replace(/\s+/g,' ');
-  const sents=txt.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú])/).map(x=>x.trim()).filter(x=>x.length>=40&&x.length<=230&&!known.has(x)&&!/[{}=]/.test(x));
+  if(!M.safeText(pg.title))continue;
+  const all=txt.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú])/).map(x=>x.trim()).filter(x=>x.length>=40&&x.length<=230&&!/[{}=]/.test(x));
+  if(!all.length||all.filter(x=>!M.safeText(x)).length>all.length*.25)continue;
+  const qw=new Set(M.words(q+' '+(d?M.DOMS[d].kw:'')));
+  const rel=x=>M.words(x).some(w=>qw.has(w)||[...qw].some(y=>y.length>4&&w.startsWith(y.slice(0,5))));
+  const sents=all.filter(x=>M.safeText(x)&&!known.has(x)&&rel(x));
   if(!sents.length)continue;
   if(!d){const h=M.detect(txt);d=Object.keys(h).sort((a,b)=>h[b]-h[a])[0]||M.profOf(s)||'ciencia'}
   const url='https://pt.wikipedia.org/wiki/'+encodeURIComponent(pg.title.replace(/ /g,'_'));
@@ -56,7 +61,9 @@ function catchUp(){const steps=Math.max(1,Math.min(1500,Math.round((now-(S.last|
  if(mode==='tick'){
   const steps=catchUp();
   const nm=await fbMessages();if(nm)console.log(`Mensagens do Firebase: ${nm}.`);
-  const p=E.researchPlan();await research(p.s,p.tema,p.wiki,p.d,p.why);
+  const qd=(S.queue||[]).splice(0,2);
+  for(const it of qd){const s=S.slimes.find(x=>x.id===it.slime)||S.slimes[0];await research(s,it.tema,it.tema,null,'porque alguém perguntou no chat')}
+  if(!qd.length){const p=E.researchPlan();await research(p.s,p.tema,p.wiki,p.d,p.why)}
   console.log(`Passos: ${steps}. Slimes: ${S.slimes.length}.`);
  }else if(mode==='message'){
   const ev=JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH,'utf8'));
