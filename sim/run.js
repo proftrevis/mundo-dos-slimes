@@ -50,7 +50,7 @@ async function fbMessages(){
  }
  return n;
 }
-function catchUp(){const steps=Math.max(1,Math.min(300,Math.round((now-(S.last||now))/12000)));E.run(steps);return steps}
+function catchUp(){const steps=Math.max(1,Math.min(1500,Math.round((now-(S.last||now))/12000)));E.run(steps);return steps}
 
 (async()=>{
  if(mode==='tick'){
