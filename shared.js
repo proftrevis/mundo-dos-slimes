@@ -21,6 +21,8 @@ const B={
  casa:{n:'Casa de pedra',home:1,lv:3,req:{construcao:25,pedra:8},cost:{madeira:10,pedra:20},d:'Firme e quentinha.'},
  sobrado:{n:'Sobrado',home:1,lv:4,req:{construcao:60},cost:{madeira:25,pedra:30,tijolos:20},d:'Dois andares, com varanda.'},
  casarao:{n:'Casarão',home:1,lv:5,req:{construcao:150},cost:{madeira:60,pedra:60,tijolos:50},d:'Casa grande com jardim, para slimes experientes.'},
+ predio:{n:'Prediozinho',home:1,lv:6,minN:40,req:{construcao:300},needs:'escola',cost:{tijolos:150,pedra:100,ferramentas:10},d:'Três andares com janelas iluminadas. Chega quando a vila tem escola e 40 slimes.'},
+ edificio:{n:'Edifício',home:1,lv:7,minN:70,req:{construcao:600},needs:'garagem',cost:{tijolos:300,pedra:200,ferramentas:40},d:'Prédio alto da era dos carros (70 slimes).'},
  horta:{n:'Horta',req:{natureza:10},cost:{madeira:6},d:'+30% de frutas para todos.'},
  viveiro:{n:'Viveiro de mudas',req:{natureza:25},cost:{madeira:10,agua:10},d:'Planta árvores novas e aumenta a floresta.'},
  oficina:{n:'Oficina',req:{carpintaria:12},cost:{madeira:15},d:'Carpinteiros fazem ferramentas (+produção).'},
@@ -39,6 +41,11 @@ const B={
  observatorio:{n:'Observatório',req:{ciencia:120},max:1,cost:{pedra:150,tijolos:100},d:'Estudam o céu: todos aprendem 15% mais.'},
  ponte:{n:'Ponte',req:{construcao:120},max:1,cost:{madeira:200,pedra:100},d:'Liga as margens: a vila encontra espaço novo mais rápido.'},
  farol:{n:'Farol',req:{defesa:80},max:1,cost:{pedra:200,tijolos:120},d:'Luz forte à noite: os bichos quase não chegam perto.'},
+ estabulo:{n:'Oficina de carroças',req:{carpintaria:40},max:1,cost:{madeira:60},kw:'carroca carrocas carreta',d:'Carroças levam madeira e pedra mais rápido.'},
+ estaleiro:{n:'Estaleiro',minN:36,req:{agua:60},max:1,cost:{madeira:120},kw:'barco barcos barquinho canoa jangada navio',d:'Barquinhos navegam pelo rio e pescam algas para a cozinha.'},
+ garagem:{n:'Garagem de carrinhos',minN:50,req:{ciencia:250},needs:'caminho',max:1,cost:{pedra:200,tijolos:150,ferramentas:20},kw:'carro carros carrinho automovel caminhao onibus',d:'Carrinhos andam pelas ruas levando materiais. Precisa de caminhos e 50 slimes.'},
+ hangar:{n:'Hangar',minN:80,req:{ciencia:500},needs:'garagem',max:1,cost:{pedra:300,tijolos:250,ferramentas:60},kw:'aviao avioes aviaozinho aeroporto helicoptero',d:'Aviõezinhos sobrevoam a floresta e trazem novidades de longe. Chega com 80 slimes.'},
+ custom:{n:'Construção inventada',req:{},max:0,cost:{},d:''},
  praca:{n:'Praça',req:{arte:30},cost:{pedra:25},d:'Mais bem-estar para todo mundo.'}
 };
 const NAMES='Gotinha Lírio Bambu Coral Faísca Pérola Cometa Estrela Trovão Aurora Luar Vagalume Sabiá Ipê Jabuti Caju Pitanga Acerola Jambo Graviola Maracujá Amora Framboesa Kiwi Melado Pudim Paçoca Quindim Brigadeiro Cocada Tapioca Mandioca Pequi Buriti Cajá Umbu Ingá Araçá Cambuci Jabuticaba Goiaba Manga Limão Hortelã Alecrim Sálvia Manjericão Canela Cravo Anis Gengibre Açafrão Baunilha Melissa Camomila Violeta Hortênsia Margarida Girassol Tulipa Orquídea Azaleia Begônia Bolha Anil Celeste Lume Pingo Safira Brisa Orvalho Neblina Cristal Marola Turquesa Índigo Lagoa Chuvisco Geleia Mirtilo Nuvem Riacho Cascata Seixo Garoa Azulão Fofura Musgo Pétala Bruma Sereno Tilápia Jujuba Pipoca Cacau Ameixa Ventinho'.split(' ');
@@ -79,6 +86,18 @@ const PRED={
  javali:{n:'javali',art:'um',ele:'Ele',c:'#6d4c3d',hp:5,str:14,minN:3,w:3,leva:['madeira','tijolos','frutas'],perda:.2,medo:1,f:['o javali veio correndo direto em mim','Javalis atacam em linha reta; desviar para o lado é mais seguro.']},
  lobo:{n:'lobo',art:'um',ele:'Ele',c:'#8a8f99',hp:8,str:22,minN:6,w:1,leva:['refeicoes','insetos','frutas'],perda:.3,medo:3,f:['o lobo uivou e eu travei de medo','Lobos têm medo de fogo; uma tocha acesa ajuda a afastá-los.']}
 };
+const IDEAK=[
+ ['caminho',/(rua|ruas|caminho|calcad|estrada|trilha|passarela|pavimento|asfalto)/],
+ ['jardim',/(jardim|canteiro|flores|floreira)/],
+ ['poco',/(poco|cisterna|caixa d)/],
+ ['parque',/(parque|parquinho|balanco|escorrega|gangorra|playground)/],
+ ['estatua',/(estatua|monumento|escultura|totem)/],
+ ['coreto',/(coreto|banco|mesa|quiosque|palco)/],
+ ['chafariz',/(chafariz|piscina|lago|espelho d)/],
+ ['muro',/(muro|muralha|portao|paliçada|palicada)/],
+ ['generico',/./]
+];
+const JOKES=['Por que o slime não briga com ninguém? Porque ele é muito molenga! Hihi!','O que o slime falou para a gelatina? “Prima, você treme igual a mim!”','Por que a árvore foi ao médico? Porque estava com dor de galho!','Qual é o peixe que cai do prédio? Aaaatum! Hihi!','O que a pedra falou para o riacho? “Pare de me lamber!”','Por que o vaga-lume é tão bom aluno? Porque ele é muito brilhante!'];
 const FRUITC=['#e8433f','#ff9d2e','#f4d23c','#a24fd0'];
 const WIKI={defesa:['Cerca','Torre de vigia','Espantalho','Lobo-cinzento','Javali'],natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};
 
@@ -124,6 +143,7 @@ function newState(){
 }
 
 function Engine(S){
+ S.ideas=S.ideas||[];S.paths=S.paths||[];S.friends=S.friends||{};S.taught=S.taught||{};
  S.queue=S.queue||[];for(const x of S.slimes){const cap=Math.round(total(x)+40+S.slimes.length*3);if(!x.nextSplit||x.nextSplit>cap)x.nextSplit=cap}
  S.queue=S.queue||[];if(S.seasonIdx===undefined)S.seasonIdx=clock(S.steps).si;
  for(const x of S.slimes){x.facts=x.facts.filter(f=>safeText(f.f));x.chat=x.chat.filter(m=>m.r==='u'||safeText(m.t))}
@@ -148,12 +168,13 @@ function Engine(S){
  }
  function T(x,y){const key=x+','+y;let t=tcache.get(key);if(!t){t=plantedSet.has(key)?treeAt(x,y):baseTerrain(x,y);tcache.set(key,t)}return t}
  const isWet=t=>t.t==='W'||t.t==='F';
+ const pathSet=new Set((S.paths||[]).map(p=>p[0]+','+p[1]));
  function indexB(){bAt.clear();for(const b of S.buildings)bAt.set(b.x+','+b.y,b)}
  function inB(x,y){const b=S.bounds;return x>b.x0&&x<b.x1&&y>b.y0&&y<b.y1}
  function countTrees(){fruitTrees=0;treeCount=0;const b=S.bounds;for(let y=b.y0+1;y<b.y1;y++)for(let x=b.x0+1;x<b.x1;x++){const t=T(x,y);if(t.t==='T'){treeCount++;if(t.kind==='fruta')fruitTrees++}}}
  indexB();countTrees();
  function buildable(x,y){
-  if(!inB(x,y)||T(x,y).t!=='G')return false;
+  if(!inB(x,y)||T(x,y).t!=='G'||pathSet.has(x+','+y))return false;
   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const t=T(x+dx,y+dy);if(isWet(t)||t.t==='C')return false;if(bAt.has((x+dx)+','+(y+dy)))return false}
   return true;
  }
@@ -190,13 +211,13 @@ function Engine(S){
   log(`${s.name} atingiu ${Math.floor(total(s))} de conhecimento e se dividiu! Nasceu ${name}.`);
  }
  const canAfford=c=>Object.entries(c).every(([r,v])=>(S.res[r]||0)>=v);
- function qualifies(s,type){const b=B[type];if(b.tot&&total(s)<b.tot)return false;return Object.entries(b.req).every(([d,v])=>(s.k[d]||0)>=v)}
+ function qualifies(s,type){const b=B[type];if(b.tot&&total(s)<b.tot)return false;if(b.minN&&S.slimes.length<b.minN)return false;if(b.needs&&!(b.needs==='caminho'?S.paths.length>=20:has(b.needs)))return false;const f=S.taught[type]?.6:1;return Object.entries(b.req).every(([d,v])=>(s.k[d]||0)>=v*f)}
  const facLimit=()=>1+Math.floor(S.slimes.length/6);
  function build(s,type){
   const b=B[type];if(!qualifies(s,type)||!canAfford(b.cost))return false;
   let spot;
   if(b.home){const h=home(s);if(h&&B[h.type].lv>=b.lv)return false;if(h){spot={x:h.x,y:h.y};S.buildings=S.buildings.filter(x=>x!==h)}}
-  else if(cnt(type)>=Math.min(facLimit(),b.max||99))return false;
+  else if(cnt(type)>=Math.min(facLimit(),(b.max??99)))return false;
   if(!spot){const hh=home(s);spot=findSpot(hh?hh.x:0,hh?hh.y+1:1);if(!spot)return false}
   for(const[r,v]of Object.entries(b.cost))S.res[r]-=v;
   const nb={id:S.nextId++,type,x:spot.x,y:spot.y,owner:s.id,at:Date.now()};
@@ -206,7 +227,7 @@ function Engine(S){
  function autoBuild(){
   for(const s of S.slimes){const h=home(s);for(const t of Object.keys(B).filter(t=>B[t].home).sort((a,b)=>B[b].lv-B[a].lv)){if(h&&B[h.type].lv>=B[t].lv)break;if(build(s,t))return}}
   if(S.slimes.some(s=>!s.home))return;
-  for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=Math.min(facLimit(),B[t].max||99))continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
+  for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=Math.min(facLimit(),(B[t].max??99)))continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
  }
  function plantTree(){
   const b=S.bounds;if(treeCount>(b.x1-b.x0-1)*(b.y1-b.y0-1)*.3)return false;
@@ -223,7 +244,7 @@ function Engine(S){
  function checkExpand(){
   const n=S.slimes.length,b=S.bounds,w=b.x1-b.x0,h=b.y1-b.y0;
   // o mundo se alarga para os lados conforme a população cresce (e um pouco para cima e para baixo)
-  const tw=Math.min(240,28+Math.round(n*1.6)),th=Math.min(120,26+Math.round(n*.5));
+  const tw=Math.min(240,30+Math.round(n*.9)),th=Math.min(120,26+Math.round(n*.5));
   let grew=false;
   if(w<tw){b.x0-=2;b.x1+=2;grew=true}
   if(h<th&&S.steps%9===0){b.y0-=1;b.y1+=1;grew=true}
@@ -375,7 +396,7 @@ function Engine(S){
   S.pred=null;return defs;
  }
  function upgrade(){
-  const cand=S.buildings.filter(b=>B[b.type]&&!B[b.type].home&&(b.nv||1)<5);if(!cand.length)return;
+  const cand=S.buildings.filter(b=>B[b.type]&&!B[b.type].home&&b.type!=='custom'&&(b.nv||1)<5);if(!cand.length)return;
   const b=pick(cand),T0=B[b.type],nv=b.nv||1,cost={};for(const[r,v]of Object.entries(T0.cost))cost[r]=Math.round(v*Math.pow(2,nv)*1.5);
   if(!canAfford(cost))return;
   const s=S.slimes.find(x=>Object.entries(T0.req).every(([d,v])=>(x.k[d]||0)>=v*(1+nv*.6)));if(!s)return;
@@ -387,7 +408,53 @@ function Engine(S){
   const sc=ks.map(k=>[k,(S.res[k]||0)/need[k]]).sort((a,b)=>a[1]-b[1]);const lo=sc[0],hi=sc[sc.length-1];
   if(hi[1]>lo[1]*3&&hi[1]>50){const v=(S.res[hi[0]]||0)*.04;S.res[hi[0]]-=v;add(lo[0],v*.8*need[lo[0]]/need[hi[0]])}
  }
- const vbonus=()=>Math.min(.6,S.buildings.reduce((a,b)=>a+((b.nv||1)-1),0)*.01);
+ const vbonus=()=>Math.min(.8,S.buildings.reduce((a,b)=>a+((b.nv||1)-1)*.01+(b.type==='custom'?.01:0)+(b.type==='estabulo'?.02*(b.nv||1):0)+(b.type==='garagem'?.03*(b.nv||1):0),0)+(S.paths.length>=20?.05:0));
+ // ---- construções inventadas a partir da conversa ----
+ function ideaFrom(text){
+  const t=norm(text).replace(/[^a-z0-9 ]/g,' ');
+  const m=t.match(/\b(construir|construam|construa|construindo|fazer|facam|faca|criar|criem|crie|montar|montem|erguer|ergam|levantar|inventar)\s+(?:(?:um|uma|uns|umas|o|a|os|as|mais|novos?|novas?)\s+)*([a-z0-9 ]{3,60})/);
+  if(!m)return null;
+  const stop=new Set('para que com na no nas nos perto ao em porque pra pois aqui ali la entre sobre ate onde quando se mas muito bem bonito bonita grande pequeno pequena'.split(' '));
+  const ws=[];for(const w of m[2].trim().split(/\s+/)){if(stop.has(w))break;ws.push(w);if(ws.length>=4)break}
+  while(ws.length&&['de','da','do','das','dos','e'].includes(ws[ws.length-1]))ws.pop();
+  if(!ws.length||ws.join('').length<3)return null;
+  let nome=ws.join(' ');if(!safeText(nome))return null;
+  {const ow=String(text).split(/\s+/).map(w=>w.replace(/[^\p{L}\p{N}-]/gu,'')).filter(Boolean),nw=ow.map(w=>norm(w));for(let i=0;i<=nw.length-ws.length;i++){if(ws.every((w,j)=>nw[i+j]===w)){nome=ow.slice(i,i+ws.length).join(' ').toLowerCase();break}}}
+  for(const[k,b]of Object.entries(B)){if(k==='custom')continue;if(norm(b.n).split(' ').includes(ws[0])||(b.kw&&b.kw.split(' ').some(w=>ws.includes(w)))||k===ws[0])return{type:k,nome:b.n}}
+  if(/^(casa|casas|predio|predios|edificio|cabana)$/.test(ws[0]))return{type:/predio|edificio/.test(ws[0])?'predio':'casa',nome}
+  const kind=IDEAK.find(([k,re])=>re.test(nome))[0];
+  return{kind,nome:nome.charAt(0).toUpperCase()+nome.slice(1)};
+ }
+ function teachIdea(s,author,text){
+  const id=ideaFrom(text);if(!id)return null;
+  if(id.type){S.taught[id.type]=1;addFact(s,'construcao',`${author} ensinou como fazer ${B[id.type].n.toLowerCase()}.`);
+   const done=has(id.type);return done?`A gente já tem ${B[id.type].n.toLowerCase()} aqui! Mas com o que você contou vou fazer ainda melhor.`:`${B[id.type].n}! Eu já tinha ouvido falar… Com a sua explicação vai ficar mais fácil aprender a construir. Quando eu souber o bastante, vou fazer!`}
+  if(S.ideas.some(i=>norm(i.nome)===norm(id.nome))){const i=S.ideas.find(i=>norm(i.nome)===norm(id.nome));i.prog=(i.prog||0)+3;return i.done?`${i.nome}? Já sei fazer! Vou fazer mais um quando sobrar material.`:`Estou praticando ${i.nome.toLowerCase()}! Com essa dica avancei mais um pouco.`}
+  if(S.ideas.length>=24)S.ideas.shift();
+  S.ideas.push({id:S.nextId++,nome:id.nome,kind:id.kind,prog:2,done:false,by:s.id,autor:author});
+  log(`${author} ensinou ${s.name} a ideia de construir: ${id.nome.toLowerCase()}.`);
+  return pick([`Uau, ${id.nome.toLowerCase()}! Nunca construí isso. Vou juntar material, treinar com os construtores e tentar fazer!`,`Que ideia boa! ${id.nome}… Já estou imaginando como vai ficar. Vou começar a praticar agora mesmo!`,`Ninguém aqui sabia fazer ${id.nome.toLowerCase()}. Vou ser o primeiro a tentar! Depois você vem ver?`]);
+ }
+ function makePaths(limit){
+  const hub=S.buildings.find(b=>b.type==='praca')||S.buildings[0];if(!hub)return 0;
+  let add=0;const put=(x,y)=>{const k=x+','+y;if(pathSet.has(k)||bAt.has(k)||!inB(x,y))return;const t=T(x,y);if(t.t!=='G')return;pathSet.add(k);S.paths.push([x,y]);add++};
+  const tg=S.buildings.filter(b=>b.type!=='ninho').sort((a,b)=>Math.hypot(a.x-hub.x,a.y-hub.y)-Math.hypot(b.x-hub.x,b.y-hub.y));
+  for(const b of tg){if(pathSet.has(b.x+','+(b.y+1)))continue;let x=hub.x,y=hub.y+1;const tx=b.x,ty=b.y+1;while(x!==tx){x+=Math.sign(tx-x);put(x,y)}while(y!==ty){y+=Math.sign(ty-y);put(x,y)}if(add>=limit)break}
+  return add;
+ }
+ function workIdeas(){
+  for(const i of S.ideas){
+   const b=S.slimes.slice().sort((a,c)=>(c.k.construcao||0)-(a.k.construcao||0))[0];if(!b)return;
+   const sk=b.k.construcao||0;
+   if(!i.done){i.prog=Math.round(((i.prog||0)+.5+sk/200)*100)/100;
+    if(i.prog>=12){const cost={madeira:20,pedra:25};if(!canAfford(cost))continue;for(const[r,v]of Object.entries(cost))S.res[r]-=v;i.done=true;
+     if(i.kind==='caminho'){makePaths(60);log(`${b.name} aprendeu a fazer ${i.nome.toLowerCase()} (ideia de ${i.autor}) e começou a ligar as casas da vila!`)}
+     else{const sp=findSpot(0,1);if(sp){S.buildings.push({id:S.nextId++,type:'custom',kind:i.kind,nome:i.nome,x:sp.x,y:sp.y,owner:b.id,at:Date.now()});indexB()}log(`${b.name} aprendeu a construir ${i.nome.toLowerCase()} (ideia de ${i.autor}) e fez o primeiro!`)}
+     addFact(b,'construcao',`Aprendi a fazer ${i.nome.toLowerCase()}.`);gain(b,'construcao',3);}
+   }else if(i.kind==='caminho'){makePaths(8)}
+   else if(Math.random()<.15&&S.buildings.filter(x=>x.type==='custom'&&x.nome===i.nome).length<1+Math.floor(S.slimes.length/20)&&canAfford({madeira:30,pedra:30})){const sp=findSpot((Math.random()*2-1)*S.slimes.length,1);if(sp){S.res.madeira-=30;S.res.pedra-=30;S.buildings.push({id:S.nextId++,type:'custom',kind:i.kind,nome:i.nome,x:sp.x,y:sp.y,owner:b.id,at:Date.now()});indexB();log(`${b.name} construiu mais um(a) ${i.nome.toLowerCase()}.`)}}
+  }
+ }
  function step(last){
   const n=S.slimes.length,tools=1+Math.min(.5,(S.res.ferramentas||0)*.02);
   const hungry=S.res.frutas+S.res.refeicoes+S.res.insetos<=0.01;
@@ -410,15 +477,31 @@ function Engine(S){
   S.steps=(S.steps||0)+1;
   if(S.steps%3===0){autoBuild();checkExpand()}
   if(S.steps%15===0)upgrade();
+  if(S.steps%5===0&&S.ideas.length)workIdeas();
+  if(has('estaleiro')&&S.steps%4===0)add('refeicoes',.4*(S.buildings.find(b=>b.type==='estaleiro').nv||1));
+  if(has('hangar')&&S.steps%60===0){const x=pick(S.slimes);gain(x,pick(DK),.6);if(Math.random()<.15)log(`Um aviãozinho voltou de longe e ${x.name} aprendeu uma novidade.`)}
   if(S.steps%10===0&&has('mercado'))market();
  }
  function run(steps){for(let i=0;i<steps;i++)step(i===steps-1);for(const k in S.res)S.res[k]=Math.round(Math.max(0,S.res[k])*100)/100}
- function answer(s,text){
+ function news(){const l=S.log.slice(0,25).map(x=>x.t).filter(t=>/(nasceu|construiu|apareceu|espantaram|melhorou|chegou|cresceu|primavera|verão|outono|inverno|caçou)/i.test(t)&&!/(ideia de|ensinou|pedido de|conversou)/.test(t));return l.length?pick(l.slice(0,6)):null}
+ function answer(s,text,author,fr){
+  author=author||'amigo';fr=fr||{n:1};
   const t=norm(text).trim(),n=S.slimes.length,ck=clock(S.steps),r=S.res;
   const isQ=/\?\s*$/.test(text.trim())||/^(o que|oque|como|por que|porque|pq|quem|onde|quando|qual|quais|quanto|sera|voce sabe|me (diz|fala|conta))\b/.test(t);
   if(isQ&&/(email|e-mail|telefone|celular|whats|endereco|onde (ele|ela|fulano|voce)? ?mora|senha|cpf|\bip\b|\buid\b|quem (te )?(falou|disse|mandou|escreveu|conversou)|quem esteve|outras pessoas|outros visitantes|nome (dele|dela|de quem)|dados)/.test(t))
    return 'Isso eu não conto! O que os visitantes falam comigo e os dados de cada um ficam bem guardadinhos. Mas posso contar coisas da floresta!';
-  if(/^(oi+|ola|ole|eai|e ai|bom dia|boa tarde|boa noite|hey|salve)\b/.test(t)&&t.length<25)
+  if(/(obrigad|valeu|brigad)/.test(t)&&t.length<40)return pick([`De nada, ${author}! Amigos se ajudam!`,`Imagina! Eu que agradeço por conversar comigo.`,`Por nada! Volta sempre, tá?`]);
+  if(/^(tchau|ate logo|ate mais|ate amanha|fui|xau|bye)/.test(t))return pick([`Tchau, ${author}! Vou ficar aqui cuidando da vila. Volta logo!`,`Até mais! Quando você voltar vou ter coisas novas para contar.`,`Tchauzinho! Vou guardar nossa conversa na minha gelatina.`]);
+  if(/(gosto de voce|te amo|amo voce|voce e fofo|fofinho|fofinha|voce e lindo|voce e linda|meu amigo|minha amiga)/.test(t))return pick([`Ownn, ${author}! Fiquei até mais azulzinho de vergonha. Também gosto muito de você!`,'Que fofo! Você é meu amigo humano favorito.','Hihi, assim eu derreto! Mas não muito, senão viro poça.']);
+  if(/(piada|algo engracado|me faz rir)/.test(t))return pick(JOKES);
+  if(/(vamos brincar|brincadeira|adivinha|charada)/.test(t))return pick(['Adivinha: o que é, o que é, cai em pé e corre deitado? É a chuva!','O que é, o que é: tem dentes mas não morde? O pente! Agora é sua vez de me perguntar uma!','O que é, o que é: quanto mais se tira, maior fica? Um buraco! Hihi.']);
+  if(/(como foi (o )?seu dia|novidade|o que aconteceu|o que ha de novo|me conta (uma )?novidade)/.test(t)){const n0=news();return n0?`Olha só o que aconteceu por aqui: ${n0} E o seu dia, como foi?`:`Hoje foi tranquilo: passei o tempo ${s.task&&TASK[s.task]?TASK[s.task].v:'descansando'}. E você, fez o quê?`}
+  if(/(comida favorita|gosta de comer|o que voce come)/.test(t))return `Eu adoro ${profOf(s)==='culinaria'?'geleia de frutas vermelhas que eu mesmo faço':profOf(s)==='natureza'?'frutas fresquinhas, direto do pé':'grilinhos crocantes e frutinhas'}! E você, qual é a sua comida favorita?`;
+  if(/(do que voce gosta|o que voce gosta|seu hobby|o que te deixa feliz)/.test(t))return `Eu gosto muito de ${profOf(s)?TASK[profOf(s)].v:'explorar a floresta'} e de conversar com amigos como você. E você, do que gosta de fazer?`;
+  if(/^(oi+|ola|ole|eai|e ai|bom dia|boa tarde|boa noite|hey|salve)\b/.test(t)&&t.length<25){
+   if(fr.n>1){const n0=news();return `Oi de novo, ${author}! Que bom que você voltou${fr.last?`. Da última vez você me ensinou sobre ${fr.last}`:''}! ${n0?'Olha a novidade: '+n0:'Quer ver o que eu aprendi?'}`}
+   return `Oi, ${author}! Eu sou ${s.name}, ${profName(s).toLowerCase()} de nível ${level(s)}. ${ck.night?'Está de noite aqui, mas ainda estou acordadinho.':'Que bom te conhecer!'} Pode me perguntar coisas ou me ensinar o que você sabe!`}
+  if(false)
    return `Oi! Eu sou ${s.name}, ${profName(s).toLowerCase()} de nível ${level(s)}. ${ck.night?'Está de noite aqui, mas ainda estou acordadinho.':'Que bom te ver por aqui!'} Quer saber o que estou fazendo ou o que já aprendi?`;
   if(/(tudo bem|como (voce )?(esta|vai)|ta bem|como se sente)/.test(t)){
    const food=r.frutas+r.insetos+r.refeicoes*2,hung=food<n*2;
@@ -452,13 +535,18 @@ function Engine(S){
   text=clean(text).slice(0,400);const scrubbed=text.includes('[removido]')&&!raw.includes('[removido]');author=clean(author).slice(0,24)||'Visitante';
   pushChat(s,{r:'u',t:text,a:author});
   const g0=total(s),mult=has('biblioteca')?1.25:1;
-  let reply=rude?'Opa, vamos conversar com gentileza? Slimes ficam tristinhos com palavras feias.':safeText(text)?answer(s,text):'Hmm, esse assunto não é para slimes. Vamos falar da floresta, da vila ou de como construir coisas?';
+  const fk=norm(author).slice(0,24),fr=S.friends[fk]||(S.friends[fk]={n:0});fr.n++;{const ks=Object.keys(S.friends);if(ks.length>300)delete S.friends[ks[0]]}
+  let reply=rude?'Opa, vamos conversar com gentileza? Slimes ficam tristinhos com palavras feias.':safeText(text)?(teachIdea(s,author,text)||answer(s,text,author,fr)):'Hmm, esse assunto não é para slimes. Vamos falar da floresta, da vila ou de como construir coisas?';
   const hits=detect(text),ds=Object.keys(hits).sort((a,b)=>hits[b]-hits[a]);
   if(reply){if(ds.length)gain(s,ds[0],.5*mult);else gain(s,profOf(s)||pick(DK),.3)}
-  else if(!ds.length){reply=pick(['Hihi, que legal conversar com você! Me ensina alguma coisa sobre a floresta, a água ou como construir uma casinha?','Hmm… não entendi tudo, mas gostei! Você sabe como as árvores dão frutas?','Eu adoro ouvir você! Pode me perguntar coisas também, tipo o que estou fazendo ou o que a vila precisa.']);gain(s,profOf(s)||pick(DK),.5)}
+  else if(!ds.length){reply=pick([`Hihi, que legal conversar com você, ${author}! Me conta: o que você mais gosta na natureza?`,`Hmm… não entendi tudo, mas adorei! Você sabe como as árvores dão frutas? Eu tô aprendendo isso.`,`Eu adoro ouvir você! Sabia que dá para me ensinar a construir coisas novas? Tenta: “construam um jardim”.`,`Que interessante! Pode me perguntar coisas também, tipo o que estou fazendo, se tem perigo ou me pedir uma piada.`]);gain(s,profOf(s)||pick(DK),.5)}
   else{
    const f=text.trim().replace(/\s+/g,' ');
-   reply=`Que legal, ${author}! Vou guardar isso na minha gelatina e praticar: “${f.length>90?f.slice(0,90)+'…':f}”. Me conta mais sobre ${DOMS[ds[0]].n.toLowerCase()}?`;
+   const q=f.length>90?f.slice(0,90)+'…':f,dn=DOMS[ds[0]].n.toLowerCase();fr.last=dn;
+   reply=pick([`Que legal, ${author}! Eu não sabia disso: “${q}”. Vou contar para os outros slimes!`,`Hmm… “${q}”. Faz sentido! Vou testar isso no meu trabalho.`,`Anotado na minha gelatina! “${q}”. Você entende muito de ${dn}!`,`Uau, que dica boa! Vou praticar isso hoje mesmo.`]);
+   const kf=s.facts.filter(x=>x.d===ds[0]&&(x.src||/^Lição/.test(x.f))&&safeText(x.f));const tw=new Set(words(f));const ov=x=>words(x).filter(w=>tw.has(w)).length;const pool=kf.map(x=>x.f.replace(/^Lição: /,'')).concat(ENC[ds[0]]).filter(x=>ov(x)>0&&norm(x)!==norm(f));const share=pool.length?pool.sort((a,b)=>ov(b)-ov(a))[0]:pick(ENC[ds[0]]);
+   if(Math.random()<.6)reply+=` E sabe o que eu aprendi sobre isso? ${share}`;
+   reply+=' '+pick(['O que mais você sabe?','Você já viu isso de perto?','Como você aprendeu isso?','Me ensina mais uma?','Que mais posso aprender com você?']);
    addFact(s,ds[0],f.slice(0,200));
    gain(s,ds[0],Math.min(5,1+ds.reduce((a,d)=>a+hits[d],0)+(f.length>60?1:0))*mult);
    s.focus={d:ds[0],n:12};s.w[ds[0]]=(s.w[ds[0]]||1)+1.5;

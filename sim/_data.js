@@ -19,6 +19,8 @@ const B={
  casa:{n:'Casa de pedra',home:1,lv:3,req:{construcao:25,pedra:8},cost:{madeira:10,pedra:20},d:'Firme e quentinha.'},
  sobrado:{n:'Sobrado',home:1,lv:4,req:{construcao:60},cost:{madeira:25,pedra:30,tijolos:20},d:'Dois andares, com varanda.'},
  casarao:{n:'Casarão',home:1,lv:5,req:{construcao:150},cost:{madeira:60,pedra:60,tijolos:50},d:'Casa grande com jardim, para slimes experientes.'},
+ predio:{n:'Prediozinho',home:1,lv:6,minN:40,req:{construcao:300},needs:'escola',cost:{tijolos:150,pedra:100,ferramentas:10},d:'Três andares com janelas iluminadas. Chega quando a vila tem escola e 40 slimes.'},
+ edificio:{n:'Edifício',home:1,lv:7,minN:70,req:{construcao:600},needs:'garagem',cost:{tijolos:300,pedra:200,ferramentas:40},d:'Prédio alto da era dos carros (70 slimes).'},
  horta:{n:'Horta',req:{natureza:10},cost:{madeira:6},d:'+30% de frutas para todos.'},
  viveiro:{n:'Viveiro de mudas',req:{natureza:25},cost:{madeira:10,agua:10},d:'Planta árvores novas e aumenta a floresta.'},
  oficina:{n:'Oficina',req:{carpintaria:12},cost:{madeira:15},d:'Carpinteiros fazem ferramentas (+produção).'},
@@ -37,6 +39,11 @@ const B={
  observatorio:{n:'Observatório',req:{ciencia:120},max:1,cost:{pedra:150,tijolos:100},d:'Estudam o céu: todos aprendem 15% mais.'},
  ponte:{n:'Ponte',req:{construcao:120},max:1,cost:{madeira:200,pedra:100},d:'Liga as margens: a vila encontra espaço novo mais rápido.'},
  farol:{n:'Farol',req:{defesa:80},max:1,cost:{pedra:200,tijolos:120},d:'Luz forte à noite: os bichos quase não chegam perto.'},
+ estabulo:{n:'Oficina de carroças',req:{carpintaria:40},max:1,cost:{madeira:60},kw:'carroca carrocas carreta',d:'Carroças levam madeira e pedra mais rápido.'},
+ estaleiro:{n:'Estaleiro',minN:36,req:{agua:60},max:1,cost:{madeira:120},kw:'barco barcos barquinho canoa jangada navio',d:'Barquinhos navegam pelo rio e pescam algas para a cozinha.'},
+ garagem:{n:'Garagem de carrinhos',minN:50,req:{ciencia:250},needs:'caminho',max:1,cost:{pedra:200,tijolos:150,ferramentas:20},kw:'carro carros carrinho automovel caminhao onibus',d:'Carrinhos andam pelas ruas levando materiais. Precisa de caminhos e 50 slimes.'},
+ hangar:{n:'Hangar',minN:80,req:{ciencia:500},needs:'garagem',max:1,cost:{pedra:300,tijolos:250,ferramentas:60},kw:'aviao avioes aviaozinho aeroporto helicoptero',d:'Aviõezinhos sobrevoam a floresta e trazem novidades de longe. Chega com 80 slimes.'},
+ custom:{n:'Construção inventada',req:{},max:0,cost:{},d:''},
  praca:{n:'Praça',req:{arte:30},cost:{pedra:25},d:'Mais bem-estar para todo mundo.'}
 };
 const NAMES='Gotinha Lírio Bambu Coral Faísca Pérola Cometa Estrela Trovão Aurora Luar Vagalume Sabiá Ipê Jabuti Caju Pitanga Acerola Jambo Graviola Maracujá Amora Framboesa Kiwi Melado Pudim Paçoca Quindim Brigadeiro Cocada Tapioca Mandioca Pequi Buriti Cajá Umbu Ingá Araçá Cambuci Jabuticaba Goiaba Manga Limão Hortelã Alecrim Sálvia Manjericão Canela Cravo Anis Gengibre Açafrão Baunilha Melissa Camomila Violeta Hortênsia Margarida Girassol Tulipa Orquídea Azaleia Begônia Bolha Anil Celeste Lume Pingo Safira Brisa Orvalho Neblina Cristal Marola Turquesa Índigo Lagoa Chuvisco Geleia Mirtilo Nuvem Riacho Cascata Seixo Garoa Azulão Fofura Musgo Pétala Bruma Sereno Tilápia Jujuba Pipoca Cacau Ameixa Ventinho'.split(' ');
@@ -77,5 +84,17 @@ const PRED={
  javali:{n:'javali',art:'um',ele:'Ele',c:'#6d4c3d',hp:5,str:14,minN:3,w:3,leva:['madeira','tijolos','frutas'],perda:.2,medo:1,f:['o javali veio correndo direto em mim','Javalis atacam em linha reta; desviar para o lado é mais seguro.']},
  lobo:{n:'lobo',art:'um',ele:'Ele',c:'#8a8f99',hp:8,str:22,minN:6,w:1,leva:['refeicoes','insetos','frutas'],perda:.3,medo:3,f:['o lobo uivou e eu travei de medo','Lobos têm medo de fogo; uma tocha acesa ajuda a afastá-los.']}
 };
+const IDEAK=[
+ ['caminho',/(rua|ruas|caminho|calcad|estrada|trilha|passarela|pavimento|asfalto)/],
+ ['jardim',/(jardim|canteiro|flores|floreira)/],
+ ['poco',/(poco|cisterna|caixa d)/],
+ ['parque',/(parque|parquinho|balanco|escorrega|gangorra|playground)/],
+ ['estatua',/(estatua|monumento|escultura|totem)/],
+ ['coreto',/(coreto|banco|mesa|quiosque|palco)/],
+ ['chafariz',/(chafariz|piscina|lago|espelho d)/],
+ ['muro',/(muro|muralha|portao|paliçada|palicada)/],
+ ['generico',/./]
+];
+const JOKES=['Por que o slime não briga com ninguém? Porque ele é muito molenga! Hihi!','O que o slime falou para a gelatina? “Prima, você treme igual a mim!”','Por que a árvore foi ao médico? Porque estava com dor de galho!','Qual é o peixe que cai do prédio? Aaaatum! Hihi!','O que a pedra falou para o riacho? “Pare de me lamber!”','Por que o vaga-lume é tão bom aluno? Porque ele é muito brilhante!'];
 const FRUITC=['#e8433f','#ff9d2e','#f4d23c','#a24fd0'];
 const WIKI={defesa:['Cerca','Torre de vigia','Espantalho','Lobo-cinzento','Javali'],natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};
