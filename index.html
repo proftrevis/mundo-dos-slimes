@@ -94,6 +94,7 @@ h3{margin:4px 0 0;font-size:18px;line-height:1.1}
 @media(max-width:900px){main{grid-template-columns:1fr;grid-template-rows:56vh auto}aside{border-left:0;border-top:1px solid var(--line)}.pane{max-height:none}#chat{max-height:46vh}}
 @media(prefers-reduced-motion:reduce){#toast{transition:none}}
 .live{font-size:13px;color:#cfe5c8}
+.msg.pend{opacity:.75}
 .msg .a{display:block;font-size:12px;opacity:.8;font-weight:700}
 a{color:var(--slime)}
 .blist .bitem{grid-template-columns:1fr}
@@ -128,9 +129,10 @@ a{color:var(--slime)}
       <div class="chips" id="chips"></div>
       <div class="who"><canvas id="face" width="112" height="112"></canvas><div><h2 id="wname"></h2><p id="wprof"></p></div></div>
       <div id="chat" aria-live="polite"></div>
+      <div class="row"><input type="text" id="nick" placeholder="Seu nome" maxlength="24" aria-label="Seu nome" style="max-width:12em"></div>
       <form id="f"><input type="text" id="msg" placeholder="Ensine algo ao slime…" autocomplete="off" maxlength="400"><button class="btn" id="send">Enviar</button></form>
       <div class="row"><input type="text" id="topic" placeholder="Tema para ele pesquisar" maxlength="80"><button class="btn alt" id="research" type="button">Pedir pesquisa</button></div>
-      <p class="mind">Este mundo é um só para todo mundo e continua vivo mesmo com a página fechada. As mensagens são enviadas pelo GitHub: ao clicar em Enviar abre uma aba do GitHub, é só confirmar. O slime responde aqui em cerca de 1 minuto.</p>
+      <p class="mind" id="how">Este mundo é um só para todo mundo e continua vivo mesmo com a página fechada.</p>
     </div>
     <div class="pane" id="p-slime"></div>
     <div class="pane" id="p-build"></div>
@@ -335,7 +337,7 @@ function renderStats(){
 function renderChips(){$('#chips').innerHTML=S.slimes.map(s=>`<button class="chip" data-id="${s.id}" aria-pressed="${s.id===selId}"><i style="background:hsl(${s.hue} 75% 58%)"></i>${esc(s.name)} <small>nv ${level(s)}</small></button>`).join('')}
 function renderChat(){
  const s=sel();$('#wname').textContent=s.name;$('#wprof').textContent=`Nível ${level(s)} · ${profName(s)} · ${fmt(total(s))} de conhecimento`;
- const el=$('#chat');el.innerHTML=s.chat.map(m=>`<div class="msg ${m.r}">${m.a?`<span class="a">${esc(m.a)}</span>`:''}${esc(m.t).replace(/\n/g,'<br>')}${m.g?`<small>${esc(m.g)}</small>`:''}</div>`).join('');el.scrollTop=el.scrollHeight;
+ const pend=FB.pending(s.id);const el=$('#chat');el.innerHTML=s.chat.concat(pend).map(m=>`<div class="msg ${m.r}${m.p?' pend':''}">${m.a?`<span class="a">${esc(m.a)}</span>`:''}${esc(m.t).replace(/\n/g,'<br>')}${m.g?`<small>${esc(m.g)}</small>`:''}</div>`).join('');el.scrollTop=el.scrollHeight;
 }
 function renderSlime(){
  const s=sel(),t=total(s),max=Math.max(10,...DK.map(d=>s.k[d]||0)),h=home(s);
@@ -364,8 +366,43 @@ function openIssue(title,text,tipo){
  toast(`Abrimos o GitHub numa nova aba. Confirme lá, e ${s.name} responde aqui em cerca de 1 minuto.`);
  fast=Date.now()+5*60e3;schedule();
 }
-$('#f').onsubmit=e=>{e.preventDefault();const v=$('#msg').value.trim();if(!v)return;$('#msg').value='';openIssue(`Mensagem para ${sel().name}`,v,'conversa')};
-$('#research').onclick=()=>{const v=$('#topic').value.trim();if(!v){toast('Escreva um tema para pesquisar.');return}$('#topic').value='';openIssue(`Pesquisa para ${sel().name}`,v,'pesquisa')};
+/* ---------- conversa instantânea (Firebase) ---------- */
+const FB={on:false,db:null,uid:null,f:null,live:[],local:[],
+ pending(id){const lim=S&&S.fbLast?Date.parse(S.fbLast):0;const out=[];
+  for(const m of this.live)if(m.slime===id&&m.at>lim)out.push({r:'u',a:m.autor,t:m.texto,p:1,at:m.at});
+  for(const m of this.local)if(m.slime===id&&m.at>lim)out.push({r:'s',t:m.t,g:m.g,p:1,at:m.at+1});
+  return out.sort((a,b)=>a.at-b.at)}};
+async function initFirebase(){
+ let cfg=null;try{const r=await fetch('firebase-config.json',{cache:'no-store'});if(r.ok)cfg=await r.json()}catch(e){}
+ if(!cfg||!cfg.apiKey||!cfg.projectId){$('#how').textContent+=' As mensagens são enviadas pelo GitHub: ao clicar em Enviar abre uma aba do GitHub, é só confirmar. O slime responde aqui em cerca de 1 minuto.';return}
+ try{
+  const V='10.14.1',base=`https://www.gstatic.com/firebasejs/${V}/`;
+  const [{initializeApp},{getAuth,signInAnonymously},f]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
+  const app=initializeApp(cfg);const cred=await signInAnonymously(getAuth(app));
+  FB.uid=cred.user.uid;FB.db=f.getFirestore(app);FB.f=f;FB.on=true;
+  f.onSnapshot(f.query(f.collection(FB.db,'mensagens'),f.orderBy('at','desc'),f.limit(60)),snap=>{
+   FB.live=snap.docs.map(d=>{const x=d.data({serverTimestamps:'estimate'});return{slime:x.slime,autor:x.autor,texto:x.texto,at:x.at?x.at.toMillis():Date.now()}});
+   if(S)renderChat();
+  },()=>{});
+  $('#how').textContent+=' Converse à vontade: o slime responde na hora, e o que ele aprende entra no mundo em poucos minutos.';
+ }catch(e){FB.on=false;$('#how').textContent+=' As mensagens são enviadas pelo GitHub: ao clicar em Enviar abre uma aba do GitHub, é só confirmar.'}
+}
+const nickEl=$('#nick');try{nickEl.value=localStorage.getItem('slimes-nick')||''}catch(e){}
+nickEl.onchange=()=>{try{localStorage.setItem('slimes-nick',nickEl.value.trim())}catch(e){}};
+async function sendFB(text,tipo){
+ const s=sel(),f=FB.f,autor=(nickEl.value.trim()||'Visitante').replace(/[<>@]/g,'').slice(0,24);
+ const b=f.writeBatch(FB.db);
+ b.set(f.doc(FB.db,'usuarios',FB.uid),{last:f.serverTimestamp()});
+ b.set(f.doc(f.collection(FB.db,'mensagens')),{slime:s.id,texto:text.slice(0,400),tipo,autor,uid:FB.uid,at:f.serverTimestamp()});
+ try{await b.commit()}catch(e){toast(String(e&&e.code).includes('permission')?'Calma! Espere uns segundinhos antes de mandar outra mensagem.':'Não consegui enviar agora. Tente de novo.');return false}
+ const now=Date.now();
+ if(tipo==='pesquisa'){FB.local.push({slime:s.id,t:`Que legal! Vou pesquisar sobre “${text.slice(0,80)}” já já e conto o que descobri.`,at:now});}
+ else{const clone=JSON.parse(JSON.stringify(S)),E2=Mu.Engine(clone),c=clone.slimes.find(x=>x.id===s.id);const r=E2.talk(c,autor,text);FB.local.push({slime:s.id,t:r.reply,g:r.gain>0?`+${fmt(r.gain)} de conhecimento, entra no mundo em poucos minutos`:'',at:now});V[s.id].say={t:r.reply,until:performance.now()+5000}}
+ renderChat();fast=Date.now()+10*60e3;schedule();return true;
+}
+$('#f').onsubmit=async e=>{e.preventDefault();const v=$('#msg').value.trim();if(!v||!S)return;$('#msg').value='';if(FB.on)await sendFB(v,'conversa');else openIssue(`Mensagem para ${sel().name}`,v,'conversa')};
+$('#research').onclick=async()=>{const v=$('#topic').value.trim();if(!v){toast('Escreva um tema para pesquisar.');return}$('#topic').value='';if(FB.on)await sendFB(v,'pesquisa');else openIssue(`Pesquisa para ${sel().name}`,v,'pesquisa')};
+initFirebase();
 setInterval(()=>{if(S)renderStats()},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
 requestAnimationFrame(frame);

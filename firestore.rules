@@ -1,0 +1,35 @@
+rules_version = '2';
+// Regras do Mundo dos Slimes: visitantes só deixam mensagens curtas, uma a cada 15 segundos.
+// O mundo em si é gravado só pela automação do GitHub, nunca pelo Firebase.
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function usuario() { return /databases/$(db)/documents/usuarios/$(request.auth.uid); }
+
+    match /mensagens/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['slime', 'texto', 'tipo', 'autor', 'uid', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.slime is int && request.resource.data.slime > 0 && request.resource.data.slime < 100000
+        && request.resource.data.texto is string && request.resource.data.texto.size() > 0 && request.resource.data.texto.size() <= 400
+        && request.resource.data.tipo in ['conversa', 'pesquisa']
+        && request.resource.data.autor is string && request.resource.data.autor.size() <= 24
+        && request.resource.data.at == request.time
+        && getAfter(usuario()).data.last == request.time
+        && (!exists(usuario()) || get(usuario()).data.last < request.time - duration.value(15, 's'));
+      allow update, delete: if false;
+    }
+
+    match /usuarios/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['last'])
+        && request.resource.data.last == request.time;
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

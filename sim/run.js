@@ -30,11 +30,32 @@ async function research(s,tema,wikiQ,d,why){
  if(!out)out=E.localResearch(s,tema);
  return E.learnResearch(s,tema,out,why);
 }
+function fbConfig(){try{const c=JSON.parse(fs.readFileSync(path.join(__dirname,'..','firebase-config.json'),'utf8'));return c&&c.projectId&&c.apiKey?c:null}catch(e){return null}}
+async function fbMessages(){
+ const c=fbConfig();if(!c)return 0;
+ const since=S.fbLast||new Date(S.created).toISOString();
+ const url=`https://firestore.googleapis.com/v1/projects/${c.projectId}/databases/(default)/documents:runQuery?key=${c.apiKey}`;
+ const q={structuredQuery:{from:[{collectionId:'mensagens'}],where:{fieldFilter:{field:{fieldPath:'at'},op:'GREATER_THAN',value:{timestampValue:since}}},orderBy:[{field:{fieldPath:'at'},direction:'ASCENDING'}],limit:100}};
+ const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(q)});
+ if(!r.ok){console.log('Firebase indisponível:',r.status,(await r.text()).slice(0,200));return 0}
+ const rows=(await r.json()).filter(x=>x.document);let n=0;
+ for(const row of rows){
+  const f=row.document.fields||{},v=k=>f[k]?(f[k].stringValue??f[k].integerValue??f[k].timestampValue):undefined;
+  const at=v('at');if(at)S.fbLast=at;
+  const s=S.slimes.find(x=>x.id===+v('slime'))||S.slimes[0];
+  const autor=String(v('autor')||'Visitante').replace(/[<>@]/g,'').trim().slice(0,24)||'Visitante';
+  const texto=String(v('texto')||'').replace(/[<>]/g,'').trim().slice(0,400);if(!texto)continue;
+  if(v('tipo')==='pesquisa'){const tema=texto.slice(0,80);await research(s,tema,tema,null,`a pedido de ${autor}`)}else E.talk(s,autor,texto);
+  n++;
+ }
+ return n;
+}
 function catchUp(){const steps=Math.max(1,Math.min(300,Math.round((now-(S.last||now))/12000)));E.run(steps);return steps}
 
 (async()=>{
  if(mode==='tick'){
   const steps=catchUp();
+  const nm=await fbMessages();if(nm)console.log(`Mensagens do Firebase: ${nm}.`);
   const p=E.researchPlan();await research(p.s,p.tema,p.wiki,p.d,p.why);
   console.log(`Passos: ${steps}. Slimes: ${S.slimes.length}.`);
  }else if(mode==='message'){

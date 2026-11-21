@@ -17,3 +17,7 @@ Um mundo vivo e compartilhado: slimes que conversam, aprendem, erram, ganham pro
 ## Moderação
 
 Cada mensagem fica registrada como issue com a conta de quem enviou. Para bloquear alguém, use o bloqueio de usuários do GitHub. Cada pessoa pode mandar até 10 mensagens por hora.
+
+## Conversa instantânea (Firebase, opcional)
+
+Com `firebase-config.json` preenchido, a página manda as mensagens para o Firestore e o slime responde na hora. A automação lê as mensagens novas a cada rodada e aplica no mundo. As regras em `firestore.rules` deixam o visitante apenas criar mensagens curtas, uma a cada 15 segundos. Ninguém consegue editar ou apagar mensagens, nem mexer no mundo pelo Firebase.
