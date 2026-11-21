@@ -24,7 +24,7 @@ function newState(){
 }
 
 function Engine(S){
- S.bugs=S.bugs||[];S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
+ S.bugs=S.bugs||[];S.threat=S.threat||0;S.alerta=S.alerta||0;if(S.pred===undefined)S.pred=null;S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
  const plantedSet=new Set(S.planted.map(p=>p[0]+','+p[1]));
  const tcache=new Map(),bAt=new Map();
  let fruitTrees=0,treeCount=0;
@@ -92,7 +92,7 @@ function Engine(S){
   const b=B[type];if(!qualifies(s,type)||!canAfford(b.cost))return false;
   let spot;
   if(b.home){const h=home(s);if(h&&B[h.type].lv>=b.lv)return false;if(h){spot={x:h.x,y:h.y};S.buildings=S.buildings.filter(x=>x!==h)}}
-  else if(cnt(type)>=facLimit())return false;
+  else if(cnt(type)>=Math.min(facLimit(),b.max||99))return false;
   if(!spot){const hh=home(s);spot=findSpot(hh?hh.x:0,hh?hh.y+1:1);if(!spot)return false}
   for(const[r,v]of Object.entries(b.cost))S.res[r]-=v;
   const nb={id:S.nextId++,type,x:spot.x,y:spot.y,owner:s.id,at:Date.now()};
@@ -102,7 +102,7 @@ function Engine(S){
  function autoBuild(){
   for(const s of S.slimes){const h=home(s);for(const t of Object.keys(B).filter(t=>B[t].home).sort((a,b)=>B[b].lv-B[a].lv)){if(h&&B[h.type].lv>=B[t].lv)break;if(build(s,t))return}}
   if(S.slimes.some(s=>!s.home))return;
-  for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=facLimit())continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
+  for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=Math.min(facLimit(),B[t].max||99))continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
  }
  function plantTree(){
   const b=S.bounds;
@@ -128,6 +128,7 @@ function Engine(S){
   if(r.agua<10)nd.agua+=.8;
   if(r.frutas>20&&r.refeicoes<n*2)nd.culinaria+=.8;
   if(S.slimes.some(x=>{const h=home(x);return!h||B[h.type].lv<2}))nd.construcao+=1;
+  if(S.threat>0)nd.defesa+=Math.min(3,S.threat);if(S.pred)nd.defesa+=2;
   if(n>=3){const cov=new Set(S.slimes.map(profOf));for(const d of DK)if(!cov.has(d))nd[d]+=1}
   return nd;
  }
@@ -163,6 +164,7 @@ function Engine(S){
    else if(d==='ciencia'){const o=S.slimes.filter(x=>x!==s);if(o.length){const t=pick(o);gain(t,profOf(t)||'ciencia',.35*mult);txt=`ensinei algo a ${t.name}!`}else{gain(s,'ciencia',.2);txt='descobri algo!'}}
    else if(d==='arte'){const v=.7*r*(has('atelie')?2:1);add('arte',v);txt=`+${fmt(v)} arte`}
    else if(d==='saude'){if(has('enfermaria')&&S.res.ervas>=2&&Math.random()<.5){S.res.ervas-=2;add('remedios',1);txt='fiz um remédio!'}else{const v=1.3*r;add('ervas',v);txt=`+${fmt(v)} ervas`}}
+   else if(d==='defesa'){const v=1*r;S.alerta=Math.min(30,S.alerta+v);if(S.pred){S.pred.hp-=.5;txt='ajudei a espantar o bicho!'}else txt='ronda feita, tudo seguro'}
    else if(d==='agua'){const v=2.5*r*(has('fonte')?1.5:1);add('agua',v);txt=`+${fmt(v)} água`}
    s.ok++;s.w[d]+=.5;gain(s,d,.15*mult);
    if(last)s.say='Consegui! '+txt;
@@ -210,16 +212,66 @@ function Engine(S){
   }
   return true;
  }
+ function predEdge(){
+  const b=S.bounds;
+  for(let i=0;i<40;i++){const side=Math.floor(Math.random()*4);let x,y;
+   if(side<2){x=side?b.x1-1:b.x0+1;y=b.y0+1+Math.floor(Math.random()*(b.y1-b.y0-1))}else{y=side===2?b.y0+1:b.y1-1;x=b.x0+1+Math.floor(Math.random()*(b.x1-b.x0-1))}
+   const t=T(x,y);if(t.t==='G'||t.t==='T')return{x,y}}
+  return null;
+ }
+ function predSpawn(){
+  const n=S.slimes.length;
+  let ch=.0025*(1+Math.min(n,24)/12);if(has('fogueira'))ch*=.55;
+  if(Math.random()>ch)return;
+  const ks=Object.keys(PRED).filter(k=>n>=PRED[k].minN);let tw=0;for(const k of ks)tw+=PRED[k].w;let x=Math.random()*tw,k=ks[0];for(const q of ks){x-=PRED[q].w;if(x<=0){k=q;break}}
+  const e=predEdge();if(!e)return;
+  S.pred={k,x:e.x,y:e.y,age:0,hp:PRED[k].hp};
+  log(has('torre')?`A torre de vigia avistou ${PRED[k].art} ${PRED[k].n} chegando! Todos em alerta.`:`${PRED[k].art[0].toUpperCase()+PRED[k].art.slice(1)} ${PRED[k].n} apareceu na beira da floresta…`);
+ }
+ function predStep(last){
+  const P=S.pred,K=PRED[P.k];P.age++;
+  const h=S.buildings.length?S.buildings[Math.floor(Math.random()*S.buildings.length)]:{x:0,y:1};
+  const dx=h.x-P.x,dy=h.y-P.y,d=Math.hypot(dx,dy)||1,m=Math.min(d,1.5);P.x=Math.round((P.x+dx/d*m)*100)/100;P.y=Math.round((P.y+dy/d*m)*100)/100;
+  const torre=has('torre'),fog=has('fogueira'),cer=cnt('cerca');
+  const free=S.slimes.filter(s=>!(s.scared>0)).sort((a,b)=>(b.k.defesa||0)-(a.k.defesa||0));
+  const defs=free.filter((s,i)=>profOf(s)==='defesa'||i<1||Math.random()<(torre?.55:.25)).slice(0,torre?5:3);
+  const mult=has('biblioteca')?1.25:1;
+  for(const s of defs){
+   const sk=s.k.defesa||0;
+   const p=Math.max(.08,Math.min(.9,.15+.6*sk/(sk+20)+(cer?.06+.03*Math.min(3,cer):0)+(fog?.1:0)+(torre?.05:0)+S.alerta*.004-K.str*.01));
+   if(last){s.x=Math.round((P.x+(Math.random()*2-1))*100)/100;s.y=Math.round((P.y+(Math.random()*1.4-.7))*100)/100;s.task='defesa'}
+   if(Math.random()<p){P.hp-=1+sk/25;gain(s,'defesa',.25*mult);s.ok++;if(last)s.say=pick(['Xô, xô! Vai embora!','Fiquem atrás de mim!','Aqui não, bicho!'])}
+   else{gain(s,'defesa',.35*mult);s.err++;if(last)s.say='Ops… '+K.f[0]+'.';if(Math.random()<.5&&addFact(s,'defesa','Lição: '+K.f[1]))log(`${s.name} errou (“${K.f[0]}”) e aprendeu: ${K.f[1]}`)}
+   if(P.hp<=0){
+    for(const x of defs)gain(x,'defesa',.6*mult);
+    log(`${defs.map(x=>x.name).slice(0,3).join(', ')}${defs.length>3?' e outros':''} espantaram ${K.art} ${K.n}! ${K.ele} voltou para o fundo da floresta.`);
+    S.threat=Math.max(0,S.threat-.5);S.pred=null;return defs;
+   }
+  }
+  if(P.age<(torre?7:5))return defs;
+  // ataque
+  const prot=Math.min(.75,(cer?.3+.1*Math.min(3,cer-1):0)+(fog?.1:0));
+  const lost=[];
+  for(const r of K.leva){const v=(S.res[r]||0)*K.perda*(1-prot);if(v>=.5){S.res[r]-=v;lost.push(`${fmt(v)} de ${RES[r].toLowerCase()}`)}}
+  const nScare=Math.max(0,Math.round(K.medo*(1-prot)));const sc=[];
+  for(let i=0;i<nScare&&i<free.length;i++){const s=pick(free);if(!(s.scared>0)){s.scared=12;sc.push(s.name);if(last)s.say='Que medo! Vou ficar quietinho um pouco…'}}
+  for(const s of S.slimes){gain(s,'defesa',.8*mult);addFact(s,'defesa','Lição: '+K.f[1])}
+  S.threat=Math.min(6,S.threat+1.5+K.medo*.5);
+  log(`${K.art[0].toUpperCase()+K.art.slice(1)} ${K.n} atacou a vila${lost.length?' e levou '+lost.join(', '):''}${sc.length?'. Ficaram assustados: '+sc.join(', '):''}${prot?' (as proteções ajudaram)':''}. Ninguém se machucou, e todos aprenderam a se defender melhor.`);
+  S.pred=null;return defs;
+ }
  function step(last){
   const n=S.slimes.length,tools=1+Math.min(.5,(S.res.ferramentas||0)*.02);
   const hungry=S.res.frutas+S.res.refeicoes+S.res.insetos<=0.01;
   spawnBugs();
+  S.alerta*=.97;S.threat=Math.max(0,S.threat-.004);
+  let busy=[];if(S.pred)busy=predStep(last)||[];else predSpawn();
   const low=S.res.frutas+S.res.insetos+S.res.refeicoes*2<n*4;
   const M=tools*(hungry?.5:1+Math.min(.3,(S.res.arte||0)/200+(has('praca')?.1:0)+(S.res.remedios>1?.05:0)));
   add('frutas',.7*Math.min(n,fruitTrees/2+1)*(has('horta')?1.3:1)*M);
   add('madeira',.15*n*M);
   const nd=needs();
-  for(const s of S.slimes.slice()){if(S.bugs.length&&Math.random()<(low?.35:.1)&&hunt(s,last))continue;doTask(s,nd,last)}
+  for(const s of S.slimes.slice()){if(busy.includes(s))continue;if(s.scared>0){s.scared--;if(last){s.task=null;if(!s.say||!/medo/.test(s.say))s.say='Ainda estou com um pouquinho de medo…'}continue}if(S.bugs.length&&Math.random()<(low?.35:.1)&&hunt(s,last))continue;doTask(s,nd,last)}
   let need=.35*n;const meals=Math.min(S.res.refeicoes,need/2);S.res.refeicoes-=meals;need-=meals*2;const bi=Math.min(S.res.insetos,need*.5);S.res.insetos-=bi;need-=bi;S.res.frutas=Math.max(0,S.res.frutas-need);
   if(n>1&&Math.random()<.3){const a=pick(S.slimes),b=pick(S.slimes);if(a!==b){const[t,l]=level(a)>=level(b)?[a,b]:[b,a],d=profOf(t);if(d)gain(l,d,.3*(has('biblioteca')?1.25:1))}}
   if(has('viveiro')&&S.res.mudas>=1&&Math.random()<.3&&plantTree()){S.res.mudas-=1;log('Uma muda nova foi plantada na floresta.')}

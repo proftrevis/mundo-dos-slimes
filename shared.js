@@ -9,6 +9,7 @@ const DOMS={
  ciencia:{n:'Ciência e saber',p:'Sábio',c:'#7a5cf0',kw:'ciencia matematica numero estrela sol lua fisica quimica experimento livro ler escrever historia energia planeta universo gravidade luz tempo calculo pesquisa por que'},
  arte:{n:'Arte e música',p:'Artista',c:'#e0509a',kw:'musica cancao cantar pintura pintar desenho desenhar cor arte danca poesia poema teatro beleza instrumento melodia escultura'},
  saude:{n:'Saúde e cura',p:'Curandeiro',c:'#2fb39b',kw:'saude remedio erva cha doenca cura corpo dormir sono descanso medico cuidar vitamina ferida exercicio higiene respirar'},
+ defesa:{n:'Defesa',p:'Guardião da Vila',c:'#c0392b',kw:'defesa defender proteger protecao cerca muro guarda vigia vigiar torre lobo raposa javali perigo fogueira espantalho ataque coragem alarme ronda espantar seguranca'},
  agua:{n:'Água e rios',p:'Guardião das Águas',c:'#2f8cf0',kw:'agua rio riacho cachoeira chuva peixe lago nadar poco irrigacao nascente limpar mar onda gelo vapor ciclo filtrar'}
 };
 const DK=Object.keys(DOMS);
@@ -27,6 +28,9 @@ const B={
  biblioteca:{n:'Biblioteca',req:{ciencia:20},cost:{madeira:20,pedra:10},d:'+25% de conhecimento nas conversas.'},
  atelie:{n:'Ateliê',req:{arte:12},cost:{madeira:10},d:'Artistas criam o dobro de obras.'},
  enfermaria:{n:'Casa de cura',req:{saude:12},cost:{madeira:10,ervas:5},d:'Curandeiros preparam remédios.'},
+ cerca:{n:'Cerca de madeira',req:{defesa:10},cost:{madeira:15},d:'Dificulta a entrada dos bichos e diminui o estrago.'},
+ fogueira:{n:'Fogueira e espantalho',req:{defesa:16},max:3,cost:{madeira:8,pedra:6},d:'Afasta os bichos: ataques ficam mais raros.'},
+ torre:{n:'Torre de vigia',req:{defesa:28},max:2,cost:{madeira:20,pedra:12},d:'Avisa cedo e chama mais slimes para defender.'},
  praca:{n:'Praça',req:{arte:30},cost:{pedra:25},d:'Mais bem-estar para todo mundo.'}
 };
 const NAMES='Gotinha Bolha Anil Celeste Lume Pingo Safira Brisa Orvalho Neblina Cristal Marola Turquesa Índigo Lagoa Chuvisco Geleia Mirtilo Nuvem Riacho Cascata Seixo Garoa Azulão Fofura Musgo Pétala Bruma Sereno Tilápia Jujuba Pipoca Cacau Ameixa Ventinho'.split(' ');
@@ -39,6 +43,7 @@ const ENC={
  ciencia:['O Sol é uma estrela e nos dá luz e calor.','A Lua muda de forma porque vemos partes iluminadas dela.','A água evapora, vira nuvem e volta como chuva.','A gravidade faz as frutas caírem das árvores.','As plantas usam a luz do Sol para fazer o próprio alimento.'],
  arte:['Misturar azul com amarelo faz verde.','Música é feita de ritmo, melodia e harmonia.','Pigmentos podem ser feitos com frutas e terra colorida.','Dançar junto deixa a comunidade feliz.','Poemas brincam com o som das palavras.'],
  saude:['Dormir bem ajuda o corpo a se recuperar.','Chá de camomila acalma e ajuda a descansar.','Lavar ferimentos com água limpa evita infecções.','Beber água todo dia mantém o corpo saudável.','Hortelã ajuda na digestão.'],
+ defesa:['Raposas fogem de barulho e de luz.','Javalis atacam em linha reta; desviar para o lado é mais seguro.','Lobos andam em grupo e têm medo de fogo.','Uma cerca bem fechada protege a comida guardada.','Quem vigia de um lugar alto vê o perigo chegando mais cedo.'],
  agua:['Nascentes são onde os rios começam.','Manter as árvores na margem deixa a água do riacho limpa.','Peixes precisam de água limpa e com oxigênio.','A cachoeira mistura ar na água do rio.','Areia e carvão ajudam a filtrar a água.']
 };
 const TASK={
@@ -50,6 +55,7 @@ const TASK={
  ciencia:{v:'observando o mundo',spot:'biblioteca',topic:'como fazer experimentos e aprender observando a natureza',f:[['minha teoria estava errada','Testar uma ideia várias vezes mostra se ela é verdadeira.'],['anotei tudo misturado','Organizar as anotações ajuda a lembrar e comparar.'],['contei as estrelas e me perdi','Dividir um problema grande em partes facilita.']]},
  arte:{v:'criando arte',spot:'atelie',topic:'como fazer tintas naturais e criar músicas',f:[['a tinta escorreu','Tinta mais grossa escorre menos.'],['desafinei a canção','Ouvir com atenção antes de cantar ajuda a afinar.'],['misturei cores demais e virou marrom','Misturar poucas cores de cada vez mantém o brilho.']]},
  saude:{v:'colhendo ervas',spot:'T',topic:'ervas medicinais seguras e como usá-las',f:[['colhi a erva errada','Antes de colher, compare a folha com uma erva conhecida.'],['fiz o chá forte demais','Chá de ervas fica melhor fraquinho e com água quente, não fervendo.'],['esqueci de descansar','Descansar também faz parte de cuidar da saúde.']]},
+ defesa:{v:'fazendo ronda',spot:'T',topic:'como proteger uma vila de animais selvagens sem machucá-los',f:[['me assustei com um barulho à toa','Nem todo barulho é perigo; olhar com calma antes de correr.'],['deixei um buraco na cerca','Conferir a cerca toda ajuda a achar os buracos.'],['dormi durante a vigia','Vigiar em turnos deixa todo mundo descansado.']]},
  agua:{v:'buscando água',spot:'W',topic:'como manter a água dos riachos limpa',f:[['peguei água turva','Água da parte que corre é mais limpa que a parada.'],['derrubei o balde no riacho','Andar devagar na margem molhada evita escorregar.'],['peguei água cheia de folhas','Tirar as folhas da nascente mantém a água limpa.']]}
 };
 const BUGS={
@@ -60,8 +66,13 @@ const BUGS={
  vagalume:{n:'vaga-lume',c:'#ffe066',food:2.2,ag:.45,w:1,fly:1,water:1,f:['o vaga-lume apagou e sumiu','Vaga-lumes piscam em ritmo; esperar a próxima piscada mostra onde estão.']}
 };
 TASK.caca={v:'caçando insetos',spot:'T',topic:'',f:[]};
+const PRED={
+ raposa:{n:'raposa',art:'uma',ele:'Ela',c:'#e07b39',hp:3,str:6,minN:1,w:5,leva:['frutas','insetos'],perda:.25,medo:0,f:['a raposa pegou uma fruta e correu','Raposas fogem de barulho e de luz; bater palmas espanta.']},
+ javali:{n:'javali',art:'um',ele:'Ele',c:'#6d4c3d',hp:5,str:14,minN:3,w:3,leva:['madeira','tijolos','frutas'],perda:.2,medo:1,f:['o javali veio correndo direto em mim','Javalis atacam em linha reta; desviar para o lado é mais seguro.']},
+ lobo:{n:'lobo',art:'um',ele:'Ele',c:'#8a8f99',hp:8,str:22,minN:6,w:1,leva:['refeicoes','insetos','frutas'],perda:.3,medo:3,f:['o lobo uivou e eu travei de medo','Lobos têm medo de fogo; uma tocha acesa ajuda a afastá-los.']}
+};
 const FRUITC=['#e8433f','#ff9d2e','#f4d23c','#a24fd0'];
-const WIKI={natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};
+const WIKI={defesa:['Cerca','Torre de vigia','Espantalho','Lobo-cinzento','Javali'],natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};
 
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 const MAXS=30;
@@ -89,7 +100,7 @@ function newState(){
 }
 
 function Engine(S){
- S.bugs=S.bugs||[];S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
+ S.bugs=S.bugs||[];S.threat=S.threat||0;S.alerta=S.alerta||0;if(S.pred===undefined)S.pred=null;S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
  const plantedSet=new Set(S.planted.map(p=>p[0]+','+p[1]));
  const tcache=new Map(),bAt=new Map();
  let fruitTrees=0,treeCount=0;
@@ -157,7 +168,7 @@ function Engine(S){
   const b=B[type];if(!qualifies(s,type)||!canAfford(b.cost))return false;
   let spot;
   if(b.home){const h=home(s);if(h&&B[h.type].lv>=b.lv)return false;if(h){spot={x:h.x,y:h.y};S.buildings=S.buildings.filter(x=>x!==h)}}
-  else if(cnt(type)>=facLimit())return false;
+  else if(cnt(type)>=Math.min(facLimit(),b.max||99))return false;
   if(!spot){const hh=home(s);spot=findSpot(hh?hh.x:0,hh?hh.y+1:1);if(!spot)return false}
   for(const[r,v]of Object.entries(b.cost))S.res[r]-=v;
   const nb={id:S.nextId++,type,x:spot.x,y:spot.y,owner:s.id,at:Date.now()};
@@ -167,7 +178,7 @@ function Engine(S){
  function autoBuild(){
   for(const s of S.slimes){const h=home(s);for(const t of Object.keys(B).filter(t=>B[t].home).sort((a,b)=>B[b].lv-B[a].lv)){if(h&&B[h.type].lv>=B[t].lv)break;if(build(s,t))return}}
   if(S.slimes.some(s=>!s.home))return;
-  for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=facLimit())continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
+  for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=Math.min(facLimit(),B[t].max||99))continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
  }
  function plantTree(){
   const b=S.bounds;
@@ -193,6 +204,7 @@ function Engine(S){
   if(r.agua<10)nd.agua+=.8;
   if(r.frutas>20&&r.refeicoes<n*2)nd.culinaria+=.8;
   if(S.slimes.some(x=>{const h=home(x);return!h||B[h.type].lv<2}))nd.construcao+=1;
+  if(S.threat>0)nd.defesa+=Math.min(3,S.threat);if(S.pred)nd.defesa+=2;
   if(n>=3){const cov=new Set(S.slimes.map(profOf));for(const d of DK)if(!cov.has(d))nd[d]+=1}
   return nd;
  }
@@ -228,6 +240,7 @@ function Engine(S){
    else if(d==='ciencia'){const o=S.slimes.filter(x=>x!==s);if(o.length){const t=pick(o);gain(t,profOf(t)||'ciencia',.35*mult);txt=`ensinei algo a ${t.name}!`}else{gain(s,'ciencia',.2);txt='descobri algo!'}}
    else if(d==='arte'){const v=.7*r*(has('atelie')?2:1);add('arte',v);txt=`+${fmt(v)} arte`}
    else if(d==='saude'){if(has('enfermaria')&&S.res.ervas>=2&&Math.random()<.5){S.res.ervas-=2;add('remedios',1);txt='fiz um remédio!'}else{const v=1.3*r;add('ervas',v);txt=`+${fmt(v)} ervas`}}
+   else if(d==='defesa'){const v=1*r;S.alerta=Math.min(30,S.alerta+v);if(S.pred){S.pred.hp-=.5;txt='ajudei a espantar o bicho!'}else txt='ronda feita, tudo seguro'}
    else if(d==='agua'){const v=2.5*r*(has('fonte')?1.5:1);add('agua',v);txt=`+${fmt(v)} água`}
    s.ok++;s.w[d]+=.5;gain(s,d,.15*mult);
    if(last)s.say='Consegui! '+txt;
@@ -275,16 +288,66 @@ function Engine(S){
   }
   return true;
  }
+ function predEdge(){
+  const b=S.bounds;
+  for(let i=0;i<40;i++){const side=Math.floor(Math.random()*4);let x,y;
+   if(side<2){x=side?b.x1-1:b.x0+1;y=b.y0+1+Math.floor(Math.random()*(b.y1-b.y0-1))}else{y=side===2?b.y0+1:b.y1-1;x=b.x0+1+Math.floor(Math.random()*(b.x1-b.x0-1))}
+   const t=T(x,y);if(t.t==='G'||t.t==='T')return{x,y}}
+  return null;
+ }
+ function predSpawn(){
+  const n=S.slimes.length;
+  let ch=.0025*(1+Math.min(n,24)/12);if(has('fogueira'))ch*=.55;
+  if(Math.random()>ch)return;
+  const ks=Object.keys(PRED).filter(k=>n>=PRED[k].minN);let tw=0;for(const k of ks)tw+=PRED[k].w;let x=Math.random()*tw,k=ks[0];for(const q of ks){x-=PRED[q].w;if(x<=0){k=q;break}}
+  const e=predEdge();if(!e)return;
+  S.pred={k,x:e.x,y:e.y,age:0,hp:PRED[k].hp};
+  log(has('torre')?`A torre de vigia avistou ${PRED[k].art} ${PRED[k].n} chegando! Todos em alerta.`:`${PRED[k].art[0].toUpperCase()+PRED[k].art.slice(1)} ${PRED[k].n} apareceu na beira da floresta…`);
+ }
+ function predStep(last){
+  const P=S.pred,K=PRED[P.k];P.age++;
+  const h=S.buildings.length?S.buildings[Math.floor(Math.random()*S.buildings.length)]:{x:0,y:1};
+  const dx=h.x-P.x,dy=h.y-P.y,d=Math.hypot(dx,dy)||1,m=Math.min(d,1.5);P.x=Math.round((P.x+dx/d*m)*100)/100;P.y=Math.round((P.y+dy/d*m)*100)/100;
+  const torre=has('torre'),fog=has('fogueira'),cer=cnt('cerca');
+  const free=S.slimes.filter(s=>!(s.scared>0)).sort((a,b)=>(b.k.defesa||0)-(a.k.defesa||0));
+  const defs=free.filter((s,i)=>profOf(s)==='defesa'||i<1||Math.random()<(torre?.55:.25)).slice(0,torre?5:3);
+  const mult=has('biblioteca')?1.25:1;
+  for(const s of defs){
+   const sk=s.k.defesa||0;
+   const p=Math.max(.08,Math.min(.9,.15+.6*sk/(sk+20)+(cer?.06+.03*Math.min(3,cer):0)+(fog?.1:0)+(torre?.05:0)+S.alerta*.004-K.str*.01));
+   if(last){s.x=Math.round((P.x+(Math.random()*2-1))*100)/100;s.y=Math.round((P.y+(Math.random()*1.4-.7))*100)/100;s.task='defesa'}
+   if(Math.random()<p){P.hp-=1+sk/25;gain(s,'defesa',.25*mult);s.ok++;if(last)s.say=pick(['Xô, xô! Vai embora!','Fiquem atrás de mim!','Aqui não, bicho!'])}
+   else{gain(s,'defesa',.35*mult);s.err++;if(last)s.say='Ops… '+K.f[0]+'.';if(Math.random()<.5&&addFact(s,'defesa','Lição: '+K.f[1]))log(`${s.name} errou (“${K.f[0]}”) e aprendeu: ${K.f[1]}`)}
+   if(P.hp<=0){
+    for(const x of defs)gain(x,'defesa',.6*mult);
+    log(`${defs.map(x=>x.name).slice(0,3).join(', ')}${defs.length>3?' e outros':''} espantaram ${K.art} ${K.n}! ${K.ele} voltou para o fundo da floresta.`);
+    S.threat=Math.max(0,S.threat-.5);S.pred=null;return defs;
+   }
+  }
+  if(P.age<(torre?7:5))return defs;
+  // ataque
+  const prot=Math.min(.75,(cer?.3+.1*Math.min(3,cer-1):0)+(fog?.1:0));
+  const lost=[];
+  for(const r of K.leva){const v=(S.res[r]||0)*K.perda*(1-prot);if(v>=.5){S.res[r]-=v;lost.push(`${fmt(v)} de ${RES[r].toLowerCase()}`)}}
+  const nScare=Math.max(0,Math.round(K.medo*(1-prot)));const sc=[];
+  for(let i=0;i<nScare&&i<free.length;i++){const s=pick(free);if(!(s.scared>0)){s.scared=12;sc.push(s.name);if(last)s.say='Que medo! Vou ficar quietinho um pouco…'}}
+  for(const s of S.slimes){gain(s,'defesa',.8*mult);addFact(s,'defesa','Lição: '+K.f[1])}
+  S.threat=Math.min(6,S.threat+1.5+K.medo*.5);
+  log(`${K.art[0].toUpperCase()+K.art.slice(1)} ${K.n} atacou a vila${lost.length?' e levou '+lost.join(', '):''}${sc.length?'. Ficaram assustados: '+sc.join(', '):''}${prot?' (as proteções ajudaram)':''}. Ninguém se machucou, e todos aprenderam a se defender melhor.`);
+  S.pred=null;return defs;
+ }
  function step(last){
   const n=S.slimes.length,tools=1+Math.min(.5,(S.res.ferramentas||0)*.02);
   const hungry=S.res.frutas+S.res.refeicoes+S.res.insetos<=0.01;
   spawnBugs();
+  S.alerta*=.97;S.threat=Math.max(0,S.threat-.004);
+  let busy=[];if(S.pred)busy=predStep(last)||[];else predSpawn();
   const low=S.res.frutas+S.res.insetos+S.res.refeicoes*2<n*4;
   const M=tools*(hungry?.5:1+Math.min(.3,(S.res.arte||0)/200+(has('praca')?.1:0)+(S.res.remedios>1?.05:0)));
   add('frutas',.7*Math.min(n,fruitTrees/2+1)*(has('horta')?1.3:1)*M);
   add('madeira',.15*n*M);
   const nd=needs();
-  for(const s of S.slimes.slice()){if(S.bugs.length&&Math.random()<(low?.35:.1)&&hunt(s,last))continue;doTask(s,nd,last)}
+  for(const s of S.slimes.slice()){if(busy.includes(s))continue;if(s.scared>0){s.scared--;if(last){s.task=null;if(!s.say||!/medo/.test(s.say))s.say='Ainda estou com um pouquinho de medo…'}continue}if(S.bugs.length&&Math.random()<(low?.35:.1)&&hunt(s,last))continue;doTask(s,nd,last)}
   let need=.35*n;const meals=Math.min(S.res.refeicoes,need/2);S.res.refeicoes-=meals;need-=meals*2;const bi=Math.min(S.res.insetos,need*.5);S.res.insetos-=bi;need-=bi;S.res.frutas=Math.max(0,S.res.frutas-need);
   if(n>1&&Math.random()<.3){const a=pick(S.slimes),b=pick(S.slimes);if(a!==b){const[t,l]=level(a)>=level(b)?[a,b]:[b,a],d=profOf(t);if(d)gain(l,d,.3*(has('biblioteca')?1.25:1))}}
   if(has('viveiro')&&S.res.mudas>=1&&Math.random()<.3&&plantTree()){S.res.mudas-=1;log('Uma muda nova foi plantada na floresta.')}
@@ -335,6 +398,6 @@ function Engine(S){
  return{S,T,inB,isWet,home,has,needs,run,talk,learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
 }
 
-const Mundo={DOMS,DK,RES,B,TASK,BUGS,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,h2,vn,fbm,fmt};
+const Mundo={DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,h2,vn,fbm,fmt};
 if(typeof module!=='undefined'&&module.exports)module.exports=Mundo;else root.Mundo=Mundo;
 })(typeof window!=='undefined'?window:globalThis);

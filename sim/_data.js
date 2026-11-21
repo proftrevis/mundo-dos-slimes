@@ -7,6 +7,7 @@ const DOMS={
  ciencia:{n:'Ciência e saber',p:'Sábio',c:'#7a5cf0',kw:'ciencia matematica numero estrela sol lua fisica quimica experimento livro ler escrever historia energia planeta universo gravidade luz tempo calculo pesquisa por que'},
  arte:{n:'Arte e música',p:'Artista',c:'#e0509a',kw:'musica cancao cantar pintura pintar desenho desenhar cor arte danca poesia poema teatro beleza instrumento melodia escultura'},
  saude:{n:'Saúde e cura',p:'Curandeiro',c:'#2fb39b',kw:'saude remedio erva cha doenca cura corpo dormir sono descanso medico cuidar vitamina ferida exercicio higiene respirar'},
+ defesa:{n:'Defesa',p:'Guardião da Vila',c:'#c0392b',kw:'defesa defender proteger protecao cerca muro guarda vigia vigiar torre lobo raposa javali perigo fogueira espantalho ataque coragem alarme ronda espantar seguranca'},
  agua:{n:'Água e rios',p:'Guardião das Águas',c:'#2f8cf0',kw:'agua rio riacho cachoeira chuva peixe lago nadar poco irrigacao nascente limpar mar onda gelo vapor ciclo filtrar'}
 };
 const DK=Object.keys(DOMS);
@@ -25,6 +26,9 @@ const B={
  biblioteca:{n:'Biblioteca',req:{ciencia:20},cost:{madeira:20,pedra:10},d:'+25% de conhecimento nas conversas.'},
  atelie:{n:'Ateliê',req:{arte:12},cost:{madeira:10},d:'Artistas criam o dobro de obras.'},
  enfermaria:{n:'Casa de cura',req:{saude:12},cost:{madeira:10,ervas:5},d:'Curandeiros preparam remédios.'},
+ cerca:{n:'Cerca de madeira',req:{defesa:10},cost:{madeira:15},d:'Dificulta a entrada dos bichos e diminui o estrago.'},
+ fogueira:{n:'Fogueira e espantalho',req:{defesa:16},max:3,cost:{madeira:8,pedra:6},d:'Afasta os bichos: ataques ficam mais raros.'},
+ torre:{n:'Torre de vigia',req:{defesa:28},max:2,cost:{madeira:20,pedra:12},d:'Avisa cedo e chama mais slimes para defender.'},
  praca:{n:'Praça',req:{arte:30},cost:{pedra:25},d:'Mais bem-estar para todo mundo.'}
 };
 const NAMES='Gotinha Bolha Anil Celeste Lume Pingo Safira Brisa Orvalho Neblina Cristal Marola Turquesa Índigo Lagoa Chuvisco Geleia Mirtilo Nuvem Riacho Cascata Seixo Garoa Azulão Fofura Musgo Pétala Bruma Sereno Tilápia Jujuba Pipoca Cacau Ameixa Ventinho'.split(' ');
@@ -37,6 +41,7 @@ const ENC={
  ciencia:['O Sol é uma estrela e nos dá luz e calor.','A Lua muda de forma porque vemos partes iluminadas dela.','A água evapora, vira nuvem e volta como chuva.','A gravidade faz as frutas caírem das árvores.','As plantas usam a luz do Sol para fazer o próprio alimento.'],
  arte:['Misturar azul com amarelo faz verde.','Música é feita de ritmo, melodia e harmonia.','Pigmentos podem ser feitos com frutas e terra colorida.','Dançar junto deixa a comunidade feliz.','Poemas brincam com o som das palavras.'],
  saude:['Dormir bem ajuda o corpo a se recuperar.','Chá de camomila acalma e ajuda a descansar.','Lavar ferimentos com água limpa evita infecções.','Beber água todo dia mantém o corpo saudável.','Hortelã ajuda na digestão.'],
+ defesa:['Raposas fogem de barulho e de luz.','Javalis atacam em linha reta; desviar para o lado é mais seguro.','Lobos andam em grupo e têm medo de fogo.','Uma cerca bem fechada protege a comida guardada.','Quem vigia de um lugar alto vê o perigo chegando mais cedo.'],
  agua:['Nascentes são onde os rios começam.','Manter as árvores na margem deixa a água do riacho limpa.','Peixes precisam de água limpa e com oxigênio.','A cachoeira mistura ar na água do rio.','Areia e carvão ajudam a filtrar a água.']
 };
 const TASK={
@@ -48,6 +53,7 @@ const TASK={
  ciencia:{v:'observando o mundo',spot:'biblioteca',topic:'como fazer experimentos e aprender observando a natureza',f:[['minha teoria estava errada','Testar uma ideia várias vezes mostra se ela é verdadeira.'],['anotei tudo misturado','Organizar as anotações ajuda a lembrar e comparar.'],['contei as estrelas e me perdi','Dividir um problema grande em partes facilita.']]},
  arte:{v:'criando arte',spot:'atelie',topic:'como fazer tintas naturais e criar músicas',f:[['a tinta escorreu','Tinta mais grossa escorre menos.'],['desafinei a canção','Ouvir com atenção antes de cantar ajuda a afinar.'],['misturei cores demais e virou marrom','Misturar poucas cores de cada vez mantém o brilho.']]},
  saude:{v:'colhendo ervas',spot:'T',topic:'ervas medicinais seguras e como usá-las',f:[['colhi a erva errada','Antes de colher, compare a folha com uma erva conhecida.'],['fiz o chá forte demais','Chá de ervas fica melhor fraquinho e com água quente, não fervendo.'],['esqueci de descansar','Descansar também faz parte de cuidar da saúde.']]},
+ defesa:{v:'fazendo ronda',spot:'T',topic:'como proteger uma vila de animais selvagens sem machucá-los',f:[['me assustei com um barulho à toa','Nem todo barulho é perigo; olhar com calma antes de correr.'],['deixei um buraco na cerca','Conferir a cerca toda ajuda a achar os buracos.'],['dormi durante a vigia','Vigiar em turnos deixa todo mundo descansado.']]},
  agua:{v:'buscando água',spot:'W',topic:'como manter a água dos riachos limpa',f:[['peguei água turva','Água da parte que corre é mais limpa que a parada.'],['derrubei o balde no riacho','Andar devagar na margem molhada evita escorregar.'],['peguei água cheia de folhas','Tirar as folhas da nascente mantém a água limpa.']]}
 };
 const BUGS={
@@ -58,5 +64,10 @@ const BUGS={
  vagalume:{n:'vaga-lume',c:'#ffe066',food:2.2,ag:.45,w:1,fly:1,water:1,f:['o vaga-lume apagou e sumiu','Vaga-lumes piscam em ritmo; esperar a próxima piscada mostra onde estão.']}
 };
 TASK.caca={v:'caçando insetos',spot:'T',topic:'',f:[]};
+const PRED={
+ raposa:{n:'raposa',art:'uma',ele:'Ela',c:'#e07b39',hp:3,str:6,minN:1,w:5,leva:['frutas','insetos'],perda:.25,medo:0,f:['a raposa pegou uma fruta e correu','Raposas fogem de barulho e de luz; bater palmas espanta.']},
+ javali:{n:'javali',art:'um',ele:'Ele',c:'#6d4c3d',hp:5,str:14,minN:3,w:3,leva:['madeira','tijolos','frutas'],perda:.2,medo:1,f:['o javali veio correndo direto em mim','Javalis atacam em linha reta; desviar para o lado é mais seguro.']},
+ lobo:{n:'lobo',art:'um',ele:'Ele',c:'#8a8f99',hp:8,str:22,minN:6,w:1,leva:['refeicoes','insetos','frutas'],perda:.3,medo:3,f:['o lobo uivou e eu travei de medo','Lobos têm medo de fogo; uma tocha acesa ajuda a afastá-los.']}
+};
 const FRUITC=['#e8433f','#ff9d2e','#f4d23c','#a24fd0'];
-const WIKI={natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};
+const WIKI={defesa:['Cerca','Torre de vigia','Espantalho','Lobo-cinzento','Javali'],natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};
