@@ -6,7 +6,7 @@ const out=`/* Gerado por sim/build-shared.js. Edite sim/_data.js e sim/_engine.j
 ${d}
 ${c}
 ${e}
-const Mundo={ERAS,ERAI,DISC,EVENTS,CULT,DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,clean,safeText,clock,SEASONS,DAYSTEPS,words,h2,vn,fbm,fmt};
+const Mundo={ERAS,ERAI,DISC,EVENTS,CULT,DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,wikiSearch,total,level,profOf,profName,detect,clean,safeText,clock,SEASONS,DAYSTEPS,words,h2,vn,fbm,fmt};
 if(typeof module!=='undefined'&&module.exports)module.exports=Mundo;else root.Mundo=Mundo;
 })(typeof window!=='undefined'?window:globalThis);
 `;

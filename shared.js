@@ -203,12 +203,43 @@ function newState(){
  return S;
 }
 
+async function wikiSearch(q,s,d,opt){
+ opt=opt||{};const M={safeText,words,DOMS,DK,detect,profOf};
+ const api='https://pt.wikipedia.org/w/api.php?format=json&origin=*&';
+ const get=async u=>{const r=await fetch(api+u,opt.headers?{headers:opt.headers}:{});if(!r.ok)throw new Error('wiki '+r.status);return r.json()};
+ const sr=await get('action=query&list=search&srlimit=3&srsearch='+encodeURIComponent(q));
+ const known=new Set(s.facts.map(f=>f.f));
+ for(const hit of (sr.query&&sr.query.search)||[]){
+  const ex=await get('action=query&prop=extracts&exintro=1&explaintext=1&pageids='+hit.pageid);
+  const pg=Object.values((ex.query&&ex.query.pages)||{})[0];if(!pg)continue;
+  const txt=(pg.extract||'').replace(/\s+/g,' ');
+  if(!M.safeText(pg.title))continue;
+  const all=txt.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú])/).map(x=>x.trim()).filter(x=>x.length>=40&&x.length<=230&&!/[{}=]/.test(x));
+  if(!all.length||all.filter(x=>!M.safeText(x)).length>all.length*.25)continue;
+  const qw=new Set(M.words(q+' '+(d?M.DOMS[d].kw:'')));
+  const qOnly=new Set(M.words(q)),dk=new Set(M.DK.flatMap(k=>M.DOMS[k].kws));
+  const hitW=(w,set)=>set.has(w)||[...set].some(y=>y.length>4&&w.startsWith(y.slice(0,5)));
+  const rel=x=>{const ws=M.words(x);const nq=ws.filter(w=>hitW(w,qOnly)).length,nd=ws.filter(w=>hitW(w,dk)).length;return nq>=2||(nq>=1&&nd>=1)||(!qOnly.size&&nd>=2)};
+  const sents=all.filter(x=>M.safeText(x)&&!known.has(x)&&rel(x));
+  if(!sents.length)continue;
+  if(!d){const h=M.detect(txt);d=Object.keys(h).sort((a,b)=>h[b]-h[a])[0]||M.profOf(s)||'ciencia'}
+  const url='https://pt.wikipedia.org/wiki/'+encodeURIComponent(pg.title.replace(/ /g,'_'));
+  return{title:pg.title,reply:`Fui até a grande biblioteca da internet e li sobre “${pg.title}”!`,learn:sents.slice(0,3).map(f=>({dominio:d,fato:f,fonte:url})),web:true};
+ }
+ return null;
+}
+
 function Engine(S){
  S.disc=S.disc||{};S.inv=S.inv||[];S.lib=S.lib||{};S.memorial=S.memorial||[];S.villages=S.villages||[];S.history=S.history||[];S.culture=S.culture||{songs:[],legends:[],fest:null};if(S.pol===undefined)S.pol=0;if(S.era===undefined)S.era=0;
  S.ideas=S.ideas||[];S.paths=S.paths||[];S.friends=S.friends||{};S.taught=S.taught||{};
  S.queue=S.queue||[];for(const x of S.slimes){const cap=Math.round(total(x)+40+S.slimes.length*3);if(!x.nextSplit||x.nextSplit>cap)x.nextSplit=cap}
  S.queue=S.queue||[];if(S.seasonIdx===undefined)S.seasonIdx=clock(S.steps).si;
  for(const x of S.slimes){x.facts=x.facts.filter(f=>safeText(f.f));x.chat=x.chat.filter(m=>m.r==='u'||safeText(m.t))}
+ if(!S.privV1){S.privV1=1;// o chat público passa a guardar só o nome do visitante e um resumo curto
+  S.ideasScanned=1;
+  for(const x of S.slimes){x.chat=x.chat.filter(m=>m.pub||(m.r==='s'&&/(fonte: Wikipédia)|^Fui olhar pela floresta|^Oi! Eu sou/.test(m.t)));x.facts=x.facts.filter(f=>f.src||/^Lição/.test(f.f)||(ENC[f.d]||[]).includes(f.f)||/ ensinou como fazer /.test(f.f))}
+  S.log=S.log.filter(l=>!/“[^”]*”\s*\((a pedido|porque alguém perguntou)/.test(l.t));S.queue=[];
+ }
  S.bugs=S.bugs||[];S.threat=S.threat||0;S.alerta=S.alerta||0;if(S.pred===undefined)S.pred=null;S.bugId=S.bugId||1;S.res.insetos=S.res.insetos||0;
  const plantedSet=new Set(S.planted.map(p=>p[0]+','+p[1]));
  const tcache=new Map(),bAt=new Map();
@@ -503,8 +534,9 @@ function Engine(S){
   }
   return fallback;
  }
+ let lastIdea=null;
  function teachIdea(s,author,text){
-  const id=ideaFrom(text);if(!id)return null;
+  const id=ideaFrom(text);if(!id)return null;lastIdea=id.type?B[id.type].n:id.nome;
   if(id.type){S.taught[id.type]=1;addFact(s,'construcao',`${author} ensinou como fazer ${B[id.type].n.toLowerCase()}.`);
    const done=has(id.type);return done?`A gente já tem ${B[id.type].n.toLowerCase()} aqui! Mas com o que você contou vou fazer ainda melhor.`:`${B[id.type].n}! Eu já tinha ouvido falar… Com a sua explicação vai ficar mais fácil aprender a construir. Quando eu souber o bastante, vou fazer!`}
   if(S.ideas.some(i=>norm(i.nome)===norm(id.nome))){const i=S.ideas.find(i=>norm(i.nome)===norm(id.nome));i.prog=(i.prog||0)+3;return i.done?`${i.nome}? Já sei fazer! Vou fazer mais um quando sobrar material.`:`Estou praticando ${i.nome.toLowerCase()}! Com essa dica avancei mais um pouco.`}
@@ -756,7 +788,7 @@ function Engine(S){
  function talk(s,author,text){
   BAD.lastIndex=0;const rude=BAD.test(text);BAD.lastIndex=0;const raw=String(text||'');
   text=clean(text).slice(0,400);const scrubbed=text.includes('[removido]')&&!raw.includes('[removido]');author=clean(author).slice(0,24)||'Visitante';
-  pushChat(s,{r:'u',t:text,a:author});
+  const q0=S.queue.length;lastIdea=null;
   const g0=total(s),mult=has('biblioteca')?1.25:1;
   const fk=norm(author).slice(0,24),fr=S.friends[fk]||(S.friends[fk]={n:0});fr.n++;{const ks=Object.keys(S.friends);if(ks.length>300)delete S.friends[ks[0]]}
   let reply=rude?'Opa, vamos conversar com gentileza? Slimes ficam tristinhos com palavras feias.':safeText(text)?(teachIdea(s,author,text)||answer(s,text,author,fr)):'Hmm, esse assunto não é para slimes. Vamos falar da floresta, da vila ou de como construir coisas?';
@@ -770,17 +802,19 @@ function Engine(S){
    const kf=s.facts.filter(x=>x.d===ds[0]&&(x.src||/^Lição/.test(x.f))&&safeText(x.f));const tw=new Set(words(f));const ov=x=>words(x).filter(w=>tw.has(w)).length;const pool=kf.map(x=>x.f.replace(/^Lição: /,'')).concat(ENC[ds[0]]).filter(x=>ov(x)>0&&norm(x)!==norm(f));const share=pool.length?pool.sort((a,b)=>ov(b)-ov(a))[0]:pick(ENC[ds[0]]);
    if(Math.random()<.6)reply+=` E sabe o que eu aprendi sobre isso? ${share}`;
    reply+=' '+pick(['O que mais você sabe?','Você já viu isso de perto?','Como você aprendeu isso?','Me ensina mais uma?','Que mais posso aprender com você?']);
-   addFact(s,ds[0],f.slice(0,200));
    gain(s,ds[0],Math.min(5,1+ds.reduce((a,d)=>a+hits[d],0)+(f.length>60?1:0))*mult);
    s.focus={d:ds[0],n:12};s.w[ds[0]]=(s.w[ds[0]]||1)+1.5;
   }
   if(scrubbed)reply+=' (Tirei da conversa os contatos e dados pessoais que você escreveu, para te proteger.)';
   const g=total(s)-g0;
-  pushChat(s,{r:'s',t:reply,g:g>0?`+${fmt(g)} de conhecimento`:''});
+  const dn=ds.length?DOMS[ds[0]].n.toLowerCase():'';
+  const resumo=rude||!safeText(text)?`conversou com ${s.name}`:lastIdea?`ensinou ${s.name} a construir: ${lastIdea.toLowerCase()}`:S.queue.length>q0?`fez uma pergunta que ${s.name} vai pesquisar`:ds.length?(/\?\s*$/.test(text.trim())?`perguntou sobre ${dn}`:`ensinou sobre ${dn}`):`bateu um papo com ${s.name}`;
+  pushChat(s,{r:'u',pub:1,a:author,t:resumo,g:g>0?`+${fmt(g)} de conhecimento`:''});
   log(`${author} conversou com ${s.name}.`);
-  return{reply,gain:g};
+  return{reply,gain:g,resumo};
  }
- function learnResearch(s,tema,out,why){
+ function learnResearch(s,tema,out,why,priv){
+  if(priv||out.title)tema=out.title||'o que perguntaram';
   const g0=total(s),mult=has('biblioteca')?1.25:1;let n=0;
   for(const a of out.learn){if(addFact(s,a.dominio,a.fato,a.fonte)){gain(s,a.dominio,2*mult);n++}}
   const g=total(s)-g0;
@@ -793,7 +827,7 @@ function Engine(S){
  function localResearch(s,tema){
   const h=detect(tema);const d=Object.keys(h).sort((a,b)=>h[b]-h[a])[0]||profOf(s)||pick(DK);
   const known=new Set(s.facts.map(f=>f.f));const pool=ENC[d].filter(f=>!known.has(f)).sort(()=>Math.random()-.5).slice(0,3);
-  return{reply:pool.length?`Fui olhar pela floresta e descobri coisas sobre ${DOMS[d].n.toLowerCase()}!`:`Já sei tudo o que encontrei sobre ${DOMS[d].n.toLowerCase()} por aqui!`,learn:pool.map(f=>({dominio:d,fato:f}))};
+  return{title:DOMS[d].n.toLowerCase(),reply:pool.length?`Fui olhar pela floresta e descobri coisas sobre ${DOMS[d].n.toLowerCase()}!`:`Já sei tudo o que encontrei sobre ${DOMS[d].n.toLowerCase()} por aqui!`,learn:pool.map(f=>({dominio:d,fato:f}))};
  }
  function researchPlan(){
   const c=S.slimes;const nd=needs(),top=DK.slice().sort((a,b)=>nd[b]-nd[a])[0];
@@ -814,6 +848,6 @@ function Engine(S){
  return{S,T,inB,isWet,home,has,needs,run,talk,capOf,known,available,dcost,invCost,eraName,eraIcon,calcEra,rpGain,ageDays,lifeOf,yearOf,clock:()=>clock(S.steps),learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
 }
 
-const Mundo={ERAS,ERAI,DISC,EVENTS,CULT,DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,clean,safeText,clock,SEASONS,DAYSTEPS,words,h2,vn,fbm,fmt};
+const Mundo={ERAS,ERAI,DISC,EVENTS,CULT,DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,wikiSearch,total,level,profOf,profName,detect,clean,safeText,clock,SEASONS,DAYSTEPS,words,h2,vn,fbm,fmt};
 if(typeof module!=='undefined'&&module.exports)module.exports=Mundo;else root.Mundo=Mundo;
 })(typeof window!=='undefined'?window:globalThis);

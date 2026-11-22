@@ -120,6 +120,15 @@ h3{margin:4px 0 0;font-size:18px;line-height:1.1}
 .msg .a{display:block;font-size:12px;opacity:.8;font-weight:700}
 a{color:var(--slime)}
 .blist .bitem{grid-template-columns:1fr}
+.msg.pub{align-self:center;background:none;border:1px dashed var(--line);color:var(--muted);font-size:13.5px;text-align:center;max-width:94%;border-radius:12px}
+.msg.pub b{color:var(--ink)}
+[hidden]{display:none!important}
+.minebar a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.minebtn{margin-left:auto;background:#ffd166;color:#3a2a00;text-decoration:none;display:inline-flex;align-items:center;min-height:38px;font-size:14.5px}
+.minebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.minebar .btn{min-height:38px;font-size:14px}
+.minebar .btn.ghost{color:#eaf6e4;border-color:#ffffff55}
+@media (max-width:900px){.minebtn,.minebar .btn{min-height:32px;font-size:12.5px;padding:0 10px}}
 </style>
 </head>
 <body>
@@ -127,6 +136,8 @@ a{color:var(--slime)}
   <h1>Mundo dos <span>Slimes</span></h1>
   <div class="stats" id="stats"></div>
   <div class="live" id="live"></div>
+  <a class="btn minebtn" id="minebtn" href="?minha">🌱 Cuidar da minha própria vila</a>
+  <div class="minebar" id="minebar" hidden><button class="btn ghost" id="reset" type="button">Recomeçar do zero</button><a class="btn" href="./">🌍 Mundo de todos</a></div>
 </header>
 <main>
   <section class="stage" aria-label="Mapa da floresta">
@@ -176,9 +187,13 @@ const TS=32,MARG=10;
 const OWNER=location.hostname.endsWith('.github.io')?location.hostname.split('.')[0]:'';
 const REPO=OWNER?(location.pathname.split('/').filter(Boolean)[0]||OWNER+'.github.io'):'';
 let S=null,E=null,selId=1,lastKey='',pollT=0,fast=0;
+// ?minha = vila própria do visitante: começa do zero e fica salva só neste aparelho.
+const MINE=new URLSearchParams(location.search).has('minha'),MKEY='slimes-minha-vila';
+const saveMine=()=>{if(MINE&&S)try{localStorage.setItem(MKEY,JSON.stringify(S))}catch(e){}};
 const T=(x,y)=>E.T(x,y),isWet=t=>t.t==='W'||t.t==='F',inB=(x,y)=>E.inB(x,y),home=s=>E.home(s),has=t=>S.buildings.some(b=>b.type===t);
 const V={};
 async function fetchWorld(){
+ if(MINE){let st=null;try{st=JSON.parse(localStorage.getItem(MKEY)||'null')}catch(e){}return st||Mu.newState()}
  if(OWNER){
   try{const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/world.json?ref=dados`,{headers:{Accept:'application/vnd.github.raw+json'},cache:'no-store'});if(r.ok)return await r.json()}catch(e){}
   const r=await fetch(`https://raw.githubusercontent.com/${OWNER}/${REPO}/dados/world.json?t=${Date.now()}`,{cache:'no-store'});if(r.ok)return await r.json();
@@ -188,18 +203,46 @@ async function fetchWorld(){
 }
 async function load(){
  try{
+  if(MINE&&S)return;
   const st=await fetchWorld();
   if(S&&st.last===S.last)return;
   const first=!S;S=st;E=Mu.Engine(S);
   const key=JSON.stringify(S.bounds)+':'+S.planted.length+':'+(S.paths||[]).length;if(key!==lastKey){lastKey=key;groundDirty=true}
   const now=performance.now();
-  for(const s of S.slimes){const v=V[s.id];if(!v)V[s.id]={x:s.x,y:s.y,tx:s.x,ty:s.y,ph:Math.random()*6};else{v.tx=s.x;v.ty=s.y}if(s.say&&!first){const st=now+Math.random()*30000;V[s.id].say={t:s.say,from:st,until:st+3500}}}
+  if(MINE&&first)mineCatchUp();
+  syncV(first);
   if(!S.slimes.some(s=>s.id===selId))selId=S.slimes[0].id;
   if(first){const s=sel();cam.x=s.x+.5;cam.y=s.y-3;const l=$('#loading');if(l)l.remove()}
   renderAll();
- }catch(e){const l=$('#loading');if(l)l.textContent='O mundo ainda não acordou. Tente de novo em alguns minutos.'}
+ }catch(e){console.error(e);const l=$('#loading');if(l)l.textContent='O mundo ainda não acordou. Tente de novo em alguns minutos.'}
 }
-function schedule(){clearTimeout(pollT);pollT=setTimeout(async()=>{await load();schedule()},fast>Date.now()?20000:90000)}
+function syncV(first){
+  const now=performance.now();
+  for(const s of S.slimes){const v=V[s.id];if(!v)V[s.id]={x:s.x,y:s.y,tx:s.x,ty:s.y,ph:Math.random()*6};else{v.tx=s.x;v.ty=s.y}if(s.say&&!first){const st=now+Math.random()*30000;V[s.id].say={t:s.say,from:st,until:st+(MINE?6000:3500)}}}
+}
+/* ---------- vila própria: o mundo roda aqui no navegador ---------- */
+function mineCatchUp(){const n=Math.min(3000,Math.floor((Date.now()-(S.last||Date.now()))/12000));if(n>0){const t0=performance.now();let k=0;while(k<n&&performance.now()-t0<1500){const c=Math.min(50,n-k);E.run(c);k+=c}if(k>150)toast(`Enquanto você estava fora, sua vila viveu ${Math.round(k/300*24)} horas.`)}S.last=Date.now();saveMine()}
+let mineBusy=false;
+async function mineResearch(s,tema,wq,d,why){
+ if(mineBusy)return null;mineBusy=true;
+ try{if(!s){const it=S.queue.shift();if(it){s=S.slimes.find(x=>x.id===it.slime)||S.slimes[0];tema=wq=it.tema;why='porque você perguntou'}else{const p=E.researchPlan();s=p.s;tema=p.tema;wq=p.wiki;d=p.d;why=p.why}}
+  let out=null;try{out=await Mu.wikiSearch(wq||tema,s,d)}catch(e){}
+  if(!out)out=E.localResearch(s,tema);
+  const r=E.learnResearch(s,tema,out,why);saveMine();renderAll();return{r,s,out};
+ }finally{mineBusy=false}
+}
+function mineTick(){
+ if(!S)return;E.run(Math.max(1,Math.min(3000,Math.round((Date.now()-(S.last||Date.now()))/12000))));S.last=Date.now();
+ if(S.steps%150===0||S.queue.length&&S.steps%10===0)mineResearch();
+ syncV(false);saveMine();renderStats();if(curTab!=='chat')renderAll();else renderChips();
+}
+if(MINE){
+ document.title='Minha vila de slimes';$('#minebtn').hidden=true;$('#minebar').hidden=false;
+ let armed=0;$('#reset').onclick=()=>{if(Date.now()-armed>4000){armed=Date.now();$('#reset').textContent='Toque de novo para apagar';setTimeout(()=>{$('#reset').textContent='Recomeçar do zero'},4000);return}
+  try{localStorage.removeItem(MKEY);localStorage.removeItem('slimes-conversa-minha')}catch(e){}location.reload()};
+ setInterval(mineTick,12000);
+}
+function schedule(){if(MINE)return;clearTimeout(pollT);pollT=setTimeout(async()=>{await load();schedule()},fast>Date.now()?20000:90000)}
 const sel=()=>S.slimes.find(s=>s.id===selId)||S.slimes[0];
 
 /* ---------- desenho ---------- */
@@ -507,12 +550,13 @@ const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'agora mesmo':
 function renderStats(){
  const area=(S.bounds.x1-S.bounds.x0-1)*(S.bounds.y1-S.bounds.y0-1),homes=S.buildings.filter(b=>B[b.type].home).length;
  $('#stats').innerHTML=`<span><b>${S.slimes.length}</b> slimes</span><span>${E.eraIcon(S.era||0)} <b>${E.eraName(S.era||0)}</b></span>${S.event&&EVENTS[S.event.k]?`<span style="color:#ffd18a">${EVENTS[S.event.k].i} ${EVENTS[S.event.k].n}</span>`:''}${S.culture&&S.culture.fest&&S.culture.fest.until>(S.steps||0)?`<span style="color:#ffc2e0">🎉 ${S.culture.fest.n}</span>`:''}<span class="opt"><b>${homes}</b> moradias</span><span class="opt"><b>${S.buildings.length-homes}</b> construções</span><span>${(()=>{const c=worldClock();return `${c.season.i} <b>${c.season.n}</b> · dia ${c.day} · ${c.night?'🌙':'☀️'} ${String(Math.floor(c.hour)).padStart(2,'0')}h`})()}</span><span class="opt"><b>${E.treeCount}</b> árvores</span><span><b>${(S.bugs||[]).length}</b> insetos</span>${S.pred&&PRED[S.pred.k]?`<span style="color:#ff8a8a">⚠ <b>${PRED[S.pred.k].n}</b> perto da vila</span>`:''}<span class="opt"><b>${S.planted.length}</b> plantadas</span><span class="opt">área <b>${area}</b> lotes</span>`;
- $('#live').textContent=`Vivo desde ${new Date(S.created).toLocaleDateString('pt-BR')} · atualizado ${ago(S.last)}`;
+ $('#live').textContent=MINE?`Sua vila, salva neste aparelho · nasceu em ${new Date(S.created).toLocaleDateString('pt-BR')}`:`Vivo desde ${new Date(S.created).toLocaleDateString('pt-BR')} · atualizado ${ago(S.last)}`;
 }
 function renderChips(){$('#chips').innerHTML=S.slimes.map(s=>`<button class="chip" data-id="${s.id}" aria-pressed="${s.id===selId}"><i style="background:hsl(${s.hue} 75% 58%)"></i>${esc(s.name)} <small>nv ${level(s)}</small></button>`).join('')}
 function renderChat(){
  const s=sel();$('#wname').textContent=s.name;$('#wprof').textContent=`Nível ${level(s)} · ${profName(s)} · ${fmt(total(s))} de conhecimento`;
- const pend=FB.pending(s.id);const el=$('#chat');el.innerHTML=s.chat.concat(pend).map(m=>`<div class="msg ${m.r}${m.p?' pend':''}">${m.a?`<span class="a">${esc(m.a)}</span>`:''}${esc(m.t).replace(/\n/g,'<br>')}${m.g?`<small>${esc(m.g)}</small>`:''}</div>`).join('');el.scrollTop=el.scrollHeight;
+ const el=$('#chat');const list=s.chat.concat(MY.of(s.id)).map((m,i)=>[m,i]).sort((a,b)=>((a[0].at||0)-(b[0].at||0))||a[1]-b[1]).map(x=>x[0]);
+ el.innerHTML=list.map(m=>m.pub&&MINE?'':m.pub?`<div class="msg pub"><b>${esc(m.a||'Visitante')}</b> ${esc(m.t)}${m.g?` <small>${esc(m.g)}</small>`:''}</div>`:m.r==='u'&&!m.me?'':`<div class="msg ${m.r}${m.me&&!MINE?' pend':''}">${esc(m.t).replace(/\n/g,'<br>')}${m.g?`<small>${esc(m.g)}</small>`:''}</div>`).join('');el.scrollTop=el.scrollHeight;
 }
 function renderSlime(){
  const s=sel(),t=total(s),max=Math.max(10,...DK.map(d=>s.k[d]||0)),h=home(s);
@@ -562,12 +606,14 @@ function openIssue(title,text,tipo){
  fast=Date.now()+5*60e3;schedule();
 }
 /* ---------- conversa instantânea (Firebase) ---------- */
-const FB={on:false,db:null,uid:null,f:null,live:[],local:[],
- pending(id){const lim=S&&S.fbLast?Date.parse(S.fbLast):0;const out=[];
-  for(const m of this.live)if(m.slime===id&&m.at>lim)out.push({r:'u',a:m.autor,t:m.texto,p:1,at:m.at});
-  for(const m of this.local)if(m.slime===id&&m.at>lim)out.push({r:'s',t:m.t,g:m.g,p:1,at:m.at+1});
-  return out.sort((a,b)=>a.at-b.at)}};
+const FB={on:false,db:null,uid:null,f:null};
+// A conversa completa de cada visitante fica só no aparelho dele. No mundo público aparece só o nome e um resumo.
+const MY={k:MINE?'slimes-conversa-minha':'slimes-conversa',all:null,
+ load(){if(!this.all){try{this.all=JSON.parse(localStorage.getItem(this.k)||'[]')}catch(e){this.all=[]}}return this.all},
+ of(id){return this.load().filter(m=>m.slime===id)},
+ add(m){const a=this.load();a.push({...m,me:1,at:m.at||Date.now()});if(a.length>300)a.splice(0,a.length-300);try{localStorage.setItem(this.k,JSON.stringify(a))}catch(e){}}};
 async function initFirebase(){
+ if(MINE){$('#how').textContent='Esta é a sua vila: começou do zero, continua viva enquanto a página estiver aberta e, quando você volta, ela recupera o tempo que passou. Fica salva só neste aparelho.';return}
  let cfg=null;try{const r=await fetch('firebase-config.json',{cache:'no-store'});if(r.ok)cfg=await r.json()}catch(e){}
  if(!cfg||!cfg.apiKey||!cfg.projectId){$('#how').textContent+=' As mensagens são enviadas pelo GitHub: ao clicar em Enviar abre uma aba do GitHub, é só confirmar. O slime responde aqui em cerca de 1 minuto.';return}
  try{
@@ -575,11 +621,7 @@ async function initFirebase(){
   const [{initializeApp},{getAuth,signInAnonymously},f]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
   const app=initializeApp(cfg);const cred=await signInAnonymously(getAuth(app));
   FB.uid=cred.user.uid;FB.db=f.getFirestore(app);FB.f=f;FB.on=true;
-  f.onSnapshot(f.query(f.collection(FB.db,'mensagens'),f.orderBy('at','desc'),f.limit(60)),snap=>{
-   FB.live=snap.docs.map(d=>{const x=d.data({serverTimestamps:'estimate'});return{slime:x.slime,autor:x.autor,texto:x.texto,at:x.at?x.at.toMillis():Date.now()}});
-   if(S)renderChat();
-  },()=>{});
-  $('#how').textContent+=' Converse à vontade: o slime responde na hora, e o que ele aprende entra no mundo em poucos minutos.';
+  $('#how').textContent+=' Converse à vontade: o slime responde na hora. Sua conversa fica só no seu aparelho; os outros visitantes veem apenas seu nome e um resumo curto do que o slime aprendeu.';
  }catch(e){FB.on=false;$('#how').textContent+=' As mensagens são enviadas pelo GitHub: ao clicar em Enviar abre uma aba do GitHub, é só confirmar.'}
 }
 const nickEl=$('#nick');try{nickEl.value=localStorage.getItem('slimes-nick')||''}catch(e){}
@@ -591,12 +633,15 @@ async function sendFB(text,tipo){
  b.set(f.doc(f.collection(FB.db,'mensagens')),{slime:s.id,texto:text.slice(0,400),tipo,autor,uid:FB.uid,at:f.serverTimestamp()});
  try{await b.commit()}catch(e){toast(String(e&&e.code).includes('permission')?'Calma! Espere uns segundinhos antes de mandar outra mensagem.':'Não consegui enviar agora. Tente de novo.');return false}
  const now=Date.now();
- if(tipo==='pesquisa'){FB.local.push({slime:s.id,t:`Que legal! Vou pesquisar sobre “${text.slice(0,80)}” já já e conto o que descobri.`,at:now});}
- else{const clone=JSON.parse(JSON.stringify(S)),E2=Mu.Engine(clone),c=clone.slimes.find(x=>x.id===s.id);const r=E2.talk(c,autor,text);FB.local.push({slime:s.id,t:r.reply,g:r.gain>0?`+${fmt(r.gain)} de conhecimento, entra no mundo em poucos minutos`:'',at:now});V[s.id].say={t:r.reply,until:performance.now()+5000}}
+ if(tipo==='pesquisa'){MY.add({slime:s.id,r:'u',t:'Pesquisa: '+text.slice(0,80),at:now});MY.add({slime:s.id,r:'s',t:`Que legal! Vou pesquisar sobre “${text.slice(0,80)}” e conto o que descobri.`,at:now+1});}
+ else{const clone=JSON.parse(JSON.stringify(S)),E2=Mu.Engine(clone),c=clone.slimes.find(x=>x.id===s.id);const r=E2.talk(c,autor,text);MY.add({slime:s.id,r:'u',t:text,at:now});MY.add({slime:s.id,r:'s',t:r.reply,g:r.gain>0?`+${fmt(r.gain)} de conhecimento, entra no mundo em poucos minutos`:'',at:now+1});V[s.id].say={t:r.reply,until:performance.now()+5000}}
  renderChat();fast=Date.now()+10*60e3;schedule();return true;
 }
-$('#f').onsubmit=async e=>{e.preventDefault();const v=$('#msg').value.trim();if(!v||!S)return;$('#msg').value='';if(FB.on)await sendFB(v,'conversa');else openIssue(`Mensagem para ${sel().name}`,v,'conversa')};
-$('#research').onclick=async()=>{const v=$('#topic').value.trim();if(!v){toast('Escreva um tema para pesquisar.');return}$('#topic').value='';if(FB.on)await sendFB(v,'pesquisa');else openIssue(`Pesquisa para ${sel().name}`,v,'pesquisa')};
+const autorNick=()=>(nickEl.value.trim()||'Você').replace(/[<>@]/g,'').slice(0,24);
+function mineTalk(v){const s=sel(),now=Date.now();MY.add({slime:s.id,r:'u',t:v,at:now});const r=E.talk(s,autorNick(),v);MY.add({slime:s.id,r:'s',t:r.reply,g:r.gain>0?`+${fmt(r.gain)} de conhecimento`:'',at:now+1});V[s.id].say={t:r.reply,until:performance.now()+5000};saveMine();renderChat();if(S.queue.length)setTimeout(()=>mineResearch(),1500)}
+async function mineAsk(v){const s=sel(),now=Date.now();MY.add({slime:s.id,r:'u',t:'Pesquisa: '+v,at:now});MY.add({slime:s.id,r:'s',t:`Vou pesquisar sobre “${v}”! Um instante…`,at:now+1});renderChat();const x=await mineResearch(s,v,v,null,'porque você pediu');if(!x)toast(`${s.name} ainda está terminando outra pesquisa. Tente daqui a pouco.`)}
+$('#f').onsubmit=async e=>{e.preventDefault();const v=$('#msg').value.trim();if(!v||!S)return;$('#msg').value='';if(MINE)mineTalk(v);else if(FB.on)await sendFB(v,'conversa');else openIssue(`Mensagem para ${sel().name}`,v,'conversa')};
+$('#research').onclick=async()=>{const v=$('#topic').value.trim();if(!v){toast('Escreva um tema para pesquisar.');return}$('#topic').value='';if(MINE)await mineAsk(v.slice(0,80));else if(FB.on)await sendFB(v,'pesquisa');else openIssue(`Pesquisa para ${sel().name}`,v,'pesquisa')};
 initFirebase();
 setInterval(()=>{if(S)renderStats()},30000);
 {const mob=matchMedia('(max-width:900px)'),rrow=$('#topic').parentElement,mo=$('#moreopt');
@@ -610,7 +655,7 @@ setInterval(()=>{if(S)renderStats()},30000);
  }
  if(window.visualViewport)visualViewport.addEventListener('resize',()=>setTimeout(resize,50));
 }
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveMine();else if(MINE){if(S){mineCatchUp();syncV(false);renderAll()}}else load()});
 requestAnimationFrame(frame);
 load().then(schedule);
 }

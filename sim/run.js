@@ -8,34 +8,10 @@ const E=M.Engine(S);
 const now=Date.now(),mode=process.env.MODE||'tick';
 const UA='MundoDosSlimes/1.0 (jogo educativo; GitHub Actions)';
 
-async function wiki(q,s,d){
- const api='https://pt.wikipedia.org/w/api.php?format=json&';
- const get=async u=>{const r=await fetch(api+u,{headers:{'User-Agent':UA}});if(!r.ok)throw new Error('wiki '+r.status);return r.json()};
- const sr=await get('action=query&list=search&srlimit=3&srsearch='+encodeURIComponent(q));
- const known=new Set(s.facts.map(f=>f.f));
- for(const hit of (sr.query&&sr.query.search)||[]){
-  const ex=await get('action=query&prop=extracts&exintro=1&explaintext=1&pageids='+hit.pageid);
-  const pg=Object.values((ex.query&&ex.query.pages)||{})[0];if(!pg)continue;
-  const txt=(pg.extract||'').replace(/\s+/g,' ');
-  if(!M.safeText(pg.title))continue;
-  const all=txt.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú])/).map(x=>x.trim()).filter(x=>x.length>=40&&x.length<=230&&!/[{}=]/.test(x));
-  if(!all.length||all.filter(x=>!M.safeText(x)).length>all.length*.25)continue;
-  const qw=new Set(M.words(q+' '+(d?M.DOMS[d].kw:'')));
-  const qOnly=new Set(M.words(q)),dk=new Set(M.DK.flatMap(k=>M.DOMS[k].kws));
-  const hitW=(w,set)=>set.has(w)||[...set].some(y=>y.length>4&&w.startsWith(y.slice(0,5)));
-  const rel=x=>{const ws=M.words(x);const nq=ws.filter(w=>hitW(w,qOnly)).length,nd=ws.filter(w=>hitW(w,dk)).length;return nq>=2||(nq>=1&&nd>=1)||(!qOnly.size&&nd>=2)};
-  const sents=all.filter(x=>M.safeText(x)&&!known.has(x)&&rel(x));
-  if(!sents.length)continue;
-  if(!d){const h=M.detect(txt);d=Object.keys(h).sort((a,b)=>h[b]-h[a])[0]||M.profOf(s)||'ciencia'}
-  const url='https://pt.wikipedia.org/wiki/'+encodeURIComponent(pg.title.replace(/ /g,'_'));
-  return{reply:`Fui até a grande biblioteca da internet e li sobre “${pg.title}”!`,learn:sents.slice(0,3).map(f=>({dominio:d,fato:f,fonte:url})),web:true};
- }
- return null;
-}
-async function research(s,tema,wikiQ,d,why){
- let out=null;try{out=await wiki(wikiQ||tema,s,d)}catch(e){console.log('Wikipédia indisponível:',e.message)}
+async function research(s,tema,wikiQ,d,why,priv){
+ let out=null;try{out=await M.wikiSearch(wikiQ||tema,s,d,{headers:{'User-Agent':UA}})}catch(e){console.log('Wikipédia indisponível:',e.message)}
  if(!out)out=E.localResearch(s,tema);
- return E.learnResearch(s,tema,out,why);
+ return E.learnResearch(s,tema,out,why,priv);
 }
 function fbConfig(){try{const c=JSON.parse(fs.readFileSync(path.join(__dirname,'..','firebase-config.json'),'utf8'));return c&&c.projectId&&c.apiKey?c:null}catch(e){return null}}
 async function fbMessages(){
@@ -52,7 +28,7 @@ async function fbMessages(){
   const s=S.slimes.find(x=>x.id===+v('slime'))||S.slimes[0];
   const autor=String(v('autor')||'Visitante').replace(/[<>@]/g,'').trim().slice(0,24)||'Visitante';
   const texto=String(v('texto')||'').replace(/[<>]/g,'').trim().slice(0,400);if(!texto)continue;
-  if(v('tipo')==='pesquisa'){const tema=texto.slice(0,80);await research(s,tema,tema,null,`a pedido de ${autor}`)}else E.talk(s,autor,texto);
+  if(v('tipo')==='pesquisa'){const tema=texto.slice(0,80);await research(s,tema,tema,null,`a pedido de ${autor}`,1)}else E.talk(s,autor,texto);
   n++;
  }
  return n;
@@ -64,7 +40,7 @@ function catchUp(){const steps=Math.max(1,Math.min(1500,Math.round((now-(S.last|
   const steps=catchUp();
   const nm=await fbMessages();if(nm)console.log(`Mensagens do Firebase: ${nm}.`);
   const qd=(S.queue||[]).splice(0,2);
-  for(const it of qd){const s=S.slimes.find(x=>x.id===it.slime)||S.slimes[0];await research(s,it.tema,it.tema,null,'porque alguém perguntou no chat')}
+  for(const it of qd){const s=S.slimes.find(x=>x.id===it.slime)||S.slimes[0];await research(s,it.tema,it.tema,null,'porque alguém perguntou no chat',1)}
   if(!qd.length){const p=E.researchPlan();await research(p.s,p.tema,p.wiki,p.d,p.why)}
   console.log(`Passos: ${steps}. Slimes: ${S.slimes.length}.`);
  }else if(mode==='message'){
