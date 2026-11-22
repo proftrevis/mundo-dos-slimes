@@ -21,8 +21,8 @@ const B={
  casa:{n:'Casa de pedra',home:1,lv:3,req:{construcao:25,pedra:8},cost:{madeira:10,pedra:20},d:'Firme e quentinha.'},
  sobrado:{n:'Sobrado',home:1,lv:4,req:{construcao:60},cost:{madeira:25,pedra:30,tijolos:20},d:'Dois andares, com varanda.'},
  casarao:{n:'Casarão',home:1,lv:5,req:{construcao:150},cost:{madeira:60,pedra:60,tijolos:50},d:'Casa grande com jardim, para slimes experientes.'},
- predio:{n:'Prediozinho',home:1,lv:6,minN:40,req:{construcao:300},needs:'escola',cost:{tijolos:150,pedra:100,ferramentas:10},d:'Três andares com janelas iluminadas. Chega quando a vila tem escola e 40 slimes.'},
- edificio:{n:'Edifício',home:1,lv:7,minN:70,req:{construcao:600},needs:'garagem',cost:{tijolos:300,pedra:200,ferramentas:40},d:'Prédio alto da era dos carros (70 slimes).'},
+ predio:{n:'Prediozinho',home:1,lv:6,tech:'engenharia',req:{construcao:300},needs:'escola',cost:{tijolos:150,pedra:100,ferramentas:10},d:'Três andares com janelas iluminadas. Precisa de escola e da descoberta Engenharia.'},
+ edificio:{n:'Edifício',home:1,lv:7,tech:'eletricidade',req:{construcao:600},needs:'garagem',cost:{tijolos:300,pedra:200,ferramentas:40},d:'Prédio alto. Precisa da descoberta Eletricidade.'},
  horta:{n:'Horta',req:{natureza:10},cost:{madeira:6},d:'+30% de frutas para todos.'},
  viveiro:{n:'Viveiro de mudas',req:{natureza:25},cost:{madeira:10,agua:10},d:'Planta árvores novas e aumenta a floresta.'},
  oficina:{n:'Oficina',req:{carpintaria:12},cost:{madeira:15},d:'Carpinteiros fazem ferramentas (+produção).'},
@@ -35,16 +35,21 @@ const B={
  fogueira:{n:'Fogueira e espantalho',req:{defesa:16},max:3,cost:{madeira:8,pedra:6},d:'Afasta os bichos: ataques ficam mais raros.'},
  torre:{n:'Torre de vigia',req:{defesa:28},max:2,cost:{madeira:20,pedra:12},d:'Avisa cedo e chama mais slimes para defender.'},
  celeiro:{n:'Celeiro',req:{culinaria:40},max:2,cost:{madeira:60,pedra:40},d:'Guarda comida: as frutas estragam bem menos.'},
- moinho:{n:'Moinho',req:{natureza:60},max:1,cost:{madeira:80,pedra:50},d:'Mói grãos: cozinheiros rendem 50% mais.'},
- escola:{n:'Escola',req:{ciencia:60},max:1,cost:{madeira:80,pedra:60,tijolos:40},d:'Slimes novos nascem sabendo o dobro.'},
+ moinho:{n:'Moinho',tech:'roda',req:{natureza:60},max:1,cost:{madeira:80,pedra:50},d:'Mói grãos: cozinheiros rendem 50% mais.'},
+ escola:{n:'Escola',tech:'escrita',req:{ciencia:60},max:1,cost:{madeira:80,pedra:60,tijolos:40},d:'Slimes novos nascem sabendo o dobro.'},
  mercado:{n:'Mercado',req:{construcao:80},max:1,cost:{madeira:100,tijolos:80},d:'Troca o que sobra pelo que falta.'},
- observatorio:{n:'Observatório',req:{ciencia:120},max:1,cost:{pedra:150,tijolos:100},d:'Estudam o céu: todos aprendem 15% mais.'},
+ observatorio:{n:'Observatório',tech:'astronomia',req:{ciencia:120},max:1,cost:{pedra:150,tijolos:100},d:'Estudam o céu: todos aprendem 15% mais.'},
  ponte:{n:'Ponte',req:{construcao:120},max:1,cost:{madeira:200,pedra:100},d:'Liga as margens: a vila encontra espaço novo mais rápido.'},
  farol:{n:'Farol',req:{defesa:80},max:1,cost:{pedra:200,tijolos:120},d:'Luz forte à noite: os bichos quase não chegam perto.'},
- estabulo:{n:'Oficina de carroças',req:{carpintaria:40},max:1,cost:{madeira:60},kw:'carroca carrocas carreta',d:'Carroças levam madeira e pedra mais rápido.'},
- estaleiro:{n:'Estaleiro',minN:36,req:{agua:60},max:1,cost:{madeira:120},kw:'barco barcos barquinho canoa jangada navio',d:'Barquinhos navegam pelo rio e pescam algas para a cozinha.'},
- garagem:{n:'Garagem de carrinhos',minN:50,req:{ciencia:250},needs:'caminho',max:1,cost:{pedra:200,tijolos:150,ferramentas:20},kw:'carro carros carrinho automovel caminhao onibus',d:'Carrinhos andam pelas ruas levando materiais. Precisa de caminhos e 50 slimes.'},
- hangar:{n:'Hangar',minN:80,req:{ciencia:500},needs:'garagem',max:1,cost:{pedra:300,tijolos:250,ferramentas:60},kw:'aviao avioes aviaozinho aeroporto helicoptero',d:'Aviõezinhos sobrevoam a floresta e trazem novidades de longe. Chega com 80 slimes.'},
+ estabulo:{n:'Oficina de carroças',tech:'roda',req:{carpintaria:40},max:1,cost:{madeira:60},kw:'carroca carrocas carreta',d:'Carroças levam madeira e pedra mais rápido.'},
+ estaleiro:{n:'Estaleiro',tech:'barco',req:{agua:60},max:1,cost:{madeira:120},kw:'barco barcos barquinho canoa jangada navio',d:'Barquinhos navegam pelo rio e pescam algas para a cozinha.'},
+ garagem:{n:'Garagem de carrinhos',tech:'motor',req:{ciencia:250},needs:'caminho',max:1,cost:{pedra:200,tijolos:150,ferramentas:20},kw:'carro carros carrinho automovel caminhao onibus',d:'Carrinhos andam pelas ruas levando materiais. Precisa de caminhos e do Motor.'},
+ hangar:{n:'Hangar',tech:'aviao',req:{ciencia:500},needs:'garagem',max:1,cost:{pedra:300,tijolos:250,ferramentas:60},kw:'aviao avioes aviaozinho aeroporto helicoptero',d:'Aviõezinhos sobrevoam a floresta e trazem novidades de longe. Precisa do Avião.'},
+ fabrica:{n:'Fábrica',tech:'vapor',req:{carpintaria:150},max:2,cost:{madeira:300,pedra:300,tijolos:200},d:'Faz ferramentas sem parar, mas solta fumaça.'},
+ usina:{n:'Usina solar',tech:'energia_solar',req:{ciencia:400},max:3,cost:{pedra:400,tijolos:300,ferramentas:50},d:'Energia limpa: limpa a poluição e acende a vila.'},
+ reciclagem:{n:'Centro de reciclagem',tech:'reciclagem',req:{natureza:300},max:2,cost:{madeira:200,tijolos:300},d:'Transforma lixo em material e reduz a poluição.'},
+ antena:{n:'Torre de comunicação',tech:'internet',req:{ciencia:600},max:1,cost:{pedra:500,tijolos:500,ferramentas:100},d:'Liga as vilas: ideias viajam na hora.'},
+ foguete:{n:'Plataforma de foguetes',tech:'foguete',req:{ciencia:900},max:1,cost:{pedra:1500,tijolos:1500,ferramentas:300},d:'De vez em quando um foguete sobe ao céu!'},
  custom:{n:'Construção inventada',req:{},max:0,cost:{},d:''},
  praca:{n:'Praça',req:{arte:30},cost:{pedra:25},d:'Mais bem-estar para todo mundo.'}
 };
@@ -101,6 +106,62 @@ const JOKES=['Por que o slime não briga com ninguém? Porque ele é muito molen
 const FRUITC=['#e8433f','#ff9d2e','#f4d23c','#a24fd0'];
 const WIKI={defesa:['Cerca','Torre de vigia','Espantalho','Lobo-cinzento','Javali'],natureza:['Fruticultura','Polinização','Adubo','Árvore frutífera','Compostagem'],construcao:['Tijolo','Adobe','Taipa de pilão','Telhado','Alvenaria'],carpintaria:['Carpintaria','Marcenaria','Madeira','Serrote'],pedra:['Granito','Rocha','Cantaria','Quartzo'],culinaria:['Geleia','Pão','Conservação de alimentos','Fermentação'],ciencia:['Método científico','Ciclo da água','Fotossíntese','Gravidade'],arte:['Pigmento','Melodia','Tinta','Escultura'],saude:['Planta medicinal','Camomila','Hortelã','Higiene'],agua:['Nascente','Mata ciliar','Filtração','Cachoeira']};
 
+// ---- civilização: descobertas, eras, problemas e cultura ----
+const ERAS=['Floresta','Aldeia','Vila','Cidade','Era Industrial','Era Moderna','Era Digital','Era Espacial'];
+const ERAI=['🌳','🛖','🏡','🏙️','🏭','🚗','💻','🚀'];
+// id:[nome, era, requisitos, domínio, custo, efeito]
+const DISC={
+ fogo:['Fogo',0,[],'culinaria',20,'Cozinhar e espantar bichos.'],
+ ferramentas:['Ferramentas de pedra',0,[],'pedra',25,'Trabalhos mais rápidos.'],
+ coleta:['Coleta organizada',0,[],'natureza',20,'Mais frutas colhidas.'],
+ cordas:['Cordas de cipó',0,[],'carpintaria',25,'Amarrar, puxar e construir.'],
+ agricultura:['Agricultura',1,['coleta'],'natureza',60,'Plantar de propósito: muito mais comida.'],
+ ceramica:['Cerâmica',1,['fogo'],'construcao',60,'Potes para guardar comida e água.'],
+ tijolo:['Tijolo cozido',1,['ceramica'],'construcao',80,'Casas mais firmes.'],
+ roda:['Roda',1,['ferramentas','cordas'],'carpintaria',90,'Carroças e moinhos.'],
+ ervas_med:['Ervas que curam',1,['coleta'],'saude',60,'Primeiros remédios.'],
+ escrita:['Escrita',2,['ceramica'],'ciencia',150,'Guardar o saber em livros.'],
+ irrigacao:['Irrigação',2,['agricultura'],'agua',140,'Água chegando às plantações.'],
+ metalurgia:['Metalurgia',2,['fogo','ferramentas'],'pedra',170,'Ferramentas de metal.'],
+ barco:['Barco',2,['cordas'],'agua',130,'Navegar pelo rio.'],
+ musica:['Instrumentos musicais',2,['cordas'],'arte',120,'Festas mais alegres.'],
+ matematica:['Matemática',3,['escrita'],'ciencia',300,'Contar, medir e planejar.'],
+ engenharia:['Engenharia',3,['matematica','tijolo'],'construcao',380,'Prédios e diques.'],
+ moinho_agua:['Moinho de água',3,['roda','irrigacao'],'agua',320,'Força do rio trabalhando.'],
+ imprensa:['Imprensa',3,['escrita','metalurgia'],'ciencia',360,'Livros para todos.'],
+ astronomia:['Astronomia',3,['matematica'],'ciencia',340,'Estudar as estrelas.'],
+ saneamento:['Saneamento',3,['engenharia'],'saude',400,'Água limpa e menos doenças.'],
+ vapor:['Máquina a vapor',4,['metalurgia','engenharia'],'ciencia',700,'Fábricas e trens.'],
+ eletricidade:['Eletricidade',4,['vapor','matematica'],'ciencia',850,'Luz à noite em toda a vila.'],
+ motor:['Motor',4,['vapor'],'carpintaria',800,'Carrinhos que andam sozinhos.'],
+ vacinas:['Vacinas',4,['saneamento','imprensa'],'saude',750,'Proteção contra doenças.'],
+ aviao:['Avião',5,['motor','engenharia'],'ciencia',1500,'Voar sobre a floresta.'],
+ reciclagem:['Reciclagem',5,['saneamento','vapor'],'natureza',1300,'Nada vira lixo.'],
+ energia_solar:['Energia solar',5,['eletricidade','astronomia'],'ciencia',1600,'Energia limpa do Sol.'],
+ computador:['Computador',6,['eletricidade','matematica'],'ciencia',2600,'Máquinas que pensam rápido.'],
+ internet:['Rede de computadores',6,['computador'],'ciencia',3000,'Todas as vilas conversando.'],
+ cidade_verde:['Cidade verde',6,['energia_solar','reciclagem'],'natureza',3200,'Crescer sem ferir a floresta.'],
+ robos:['Robozinhos ajudantes',6,['computador','motor'],'carpintaria',3400,'Ajudam nos trabalhos pesados.'],
+ foguete:['Foguete',7,['aviao','computador'],'ciencia',6000,'Ir além do céu.'],
+ satelite:['Satélite',7,['foguete'],'ciencia',7000,'Ver o mundo lá de cima.'],
+ estacao_lunar:['Estação na Lua',7,['foguete','cidade_verde'],'construcao',9000,'Uma vila na Lua!']
+};
+const INV_A=['Moinho','Ponte','Lanterna','Jardim','Máquina','Torre','Barco','Robô','Estufa','Telescópio','Bicicleta','Balão','Trem','Farol','Relógio','Aqueduto','Painel','Ninho','Escada','Elevador'];
+const INV_B=['solar','flutuante','de cristal','musical','de vento','que canta','gigante','de bolso','de mel','das estrelas','de folhas','saltitante','de gelatina','das nuvens','de orvalho','arco-íris','de luz','que dança','silencioso','mágico'];
+const EVENTS={
+ seca:{n:'Seca',i:'☀️',era:1,sol:'irrigacao',dur:900,d:'Pouca chuva: água e frutas rendem metade.'},
+ praga:{n:'Praga nas plantações',i:'🐛',era:1,sol:'ervas_med',dur:700,d:'Bichinhos estragam as frutas.'},
+ enchente:{n:'Enchente',i:'🌊',era:2,sol:'engenharia',dur:600,d:'O rio subiu e atrapalha os trabalhos.'},
+ doenca:{n:'Gripe dos slimes',i:'🤧',era:3,sol:'vacinas',dur:800,d:'Muitos slimes espirrando e trabalhando devagar.'},
+ poluicao:{n:'Poluição',i:'🏭',era:4,sol:'reciclagem',dur:1200,d:'Fumaça das fábricas faz mal às plantas.'},
+ tempestade:{n:'Tempestade forte',i:'⛈️',era:0,sol:'engenharia',dur:400,d:'Ventania e chuva forte atrapalham o trabalho.'},
+ chuva_meteoros:{n:'Chuva de meteoros',i:'☄️',era:7,sol:'satelite',dur:500,d:'Pedrinhas do céu assustam a vila.'},
+ apagao:{n:'Apagão',i:'🔌',era:5,sol:'energia_solar',dur:500,d:'Falta energia e tudo fica mais lento.'}
+};
+const CULT=[['artistas','arte'],['inventores','ciencia'],['agricultores','natureza'],['navegantes','agua'],['construtores','construcao'],['curandeiros','saude'],['cozinheiros','culinaria']];
+const VNAMES=['Vila Orvalho','Recanto Azul','Pedra Lisa','Vale das Gotas','Porto Riacho','Bosque Alto','Lagoa Clara','Colina do Sol','Ninho Verde','Campo Lume','Cachoeira Nova','Serra Gelatina'];
+const SONGS=['Canção da Chuva','Ciranda do Riacho','Valsa das Gotinhas','Hino da Primeira Fogueira','Toada do Vaga-lume','Samba da Colheita','Cantiga da Lua','Baião do Moinho','Marcha dos Construtores','Acalanto da Floresta'];
+
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 const MAXS=120;
 function h2(x,y,s){let n=(Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(s,1442695041))|0;n=Math.imul(n^(n>>>13),1274126177);n^=n>>>16;return (n>>>0)/4294967296}
@@ -143,6 +204,7 @@ function newState(){
 }
 
 function Engine(S){
+ S.disc=S.disc||{};S.inv=S.inv||[];S.lib=S.lib||{};S.memorial=S.memorial||[];S.villages=S.villages||[];S.history=S.history||[];S.culture=S.culture||{songs:[],legends:[],fest:null};if(S.pol===undefined)S.pol=0;if(S.era===undefined)S.era=0;
  S.ideas=S.ideas||[];S.paths=S.paths||[];S.friends=S.friends||{};S.taught=S.taught||{};
  S.queue=S.queue||[];for(const x of S.slimes){const cap=Math.round(total(x)+40+S.slimes.length*3);if(!x.nextSplit||x.nextSplit>cap)x.nextSplit=cap}
  S.queue=S.queue||[];if(S.seasonIdx===undefined)S.seasonIdx=clock(S.steps).si;
@@ -191,7 +253,7 @@ function Engine(S){
  function gain(s,d,pts){
   if(!DOMS[d]||!(pts>0))return;
   const pn0=profName(s),l0=level(s);
-  if(has('observatorio'))pts*=1.15;
+  if(has('observatorio'))pts*=1.15;pts*=learnMult();
   s.k[d]=Math.round(((s.k[d]||0)+pts)*100)/100;
   if(profName(s)!==pn0)log(`${s.name} agora é ${profName(s)}!`);
   if(level(s)>l0)log(`${s.name} chegou ao nível ${level(s)}.`);
@@ -207,11 +269,12 @@ function Engine(S){
   c.nextSplit=Math.round(total(c)+25);
   const cov=DK.map(d=>[d,S.slimes.filter(x=>profOf(x)===d).length]).sort((a,b)=>a[1]-b[1]||Math.random()-.5);c.w[cov[0][0]]=6;c.focus={d:cov[0][0],n:80};
   pushChat(c,{r:'s',t:`Oi! Eu nasci do ${s.name}! Lembro de umas coisinhas que ele sabia, mas quero aprender as minhas próprias. Acho que vou gostar de ${DOMS[cov[0][0]].n.toLowerCase()}!`});
+  c.bornStep=S.steps||0;c.life=Math.round(DAYSTEPS*(96+Math.random()*48));libBoost(c);
   S.slimes.push(c);
   log(`${s.name} atingiu ${Math.floor(total(s))} de conhecimento e se dividiu! Nasceu ${name}.`);
  }
  const canAfford=c=>Object.entries(c).every(([r,v])=>(S.res[r]||0)>=v);
- function qualifies(s,type){const b=B[type];if(b.tot&&total(s)<b.tot)return false;if(b.minN&&S.slimes.length<b.minN)return false;if(b.needs&&!(b.needs==='caminho'?S.paths.length>=20:has(b.needs)))return false;const f=S.taught[type]?.6:1;return Object.entries(b.req).every(([d,v])=>(s.k[d]||0)>=v*f)}
+ function qualifies(s,type){const b=B[type];if(b.tot&&total(s)<b.tot)return false;if(b.minN&&S.slimes.length<b.minN)return false;if(b.tech&&!known(b.tech))return false;if(b.needs&&!(b.needs==='caminho'?S.paths.length>=20:has(b.needs)))return false;const f=S.taught[type]?.6:1;return Object.entries(b.req).every(([d,v])=>(s.k[d]||0)>=v*f)}
  const facLimit=()=>1+Math.floor(S.slimes.length/25);
  function build(s,type,by){
   const b=B[type];by=by||s;if(!qualifies(by,type)||!canAfford(b.cost))return false;
@@ -225,6 +288,7 @@ function Engine(S){
   log(by!==s?`${by.name} ajudou ${s.name} a construir: ${b.n}.`:`${s.name} construiu: ${b.n}.`);return true;
  }
  function autoBuild(){
+  for(const s of S.slimes)if(!home(s)){const f=S.buildings.find(b=>b.free&&B[b.type].home);if(f){f.free=0;f.owner=s.id;s.home=f.id}}
   const builders=S.slimes.slice().sort((a,b)=>(b.k.construcao||0)-(a.k.construcao||0)).slice(0,3);
   const hl=s=>{const h=home(s);return h?B[h.type].lv:0};
   for(const s of S.slimes.slice().sort((a,b)=>hl(a)-hl(b))){const h=home(s);for(const t of Object.keys(B).filter(t=>B[t].home).sort((a,b)=>B[b].lv-B[a].lv)){if(h&&B[h.type].lv>=B[t].lv)break;if(build(s,t))return;for(const bd of builders)if(bd!==s&&build(s,t,bd))return}}
@@ -232,7 +296,7 @@ function Engine(S){
   for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=Math.min(facLimit(),(B[t].max??99)))continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
  }
  function plantTree(){
-  const b=S.bounds;if(treeCount>(b.x1-b.x0-1)*(b.y1-b.y0-1)*.3)return false;
+  if(S.event&&S.event.k==='poluicao')return false;const b=S.bounds;if(treeCount>(b.x1-b.x0-1)*(b.y1-b.y0-1)*.3)return false;
   for(let i=0;i<60;i++){
    const x=b.x0+1+Math.floor(Math.random()*(b.x1-b.x0-1)),y=b.y0+1+Math.floor(Math.random()*(b.y1-b.y0-1));
    if(T(x,y).t!=='G'||Math.hypot(x,y-1)<5)continue;
@@ -285,7 +349,7 @@ function Engine(S){
  function doTask(s,nd,last){
   const d=chooseDomain(s,nd);s.w[d]=s.w[d]||1;
   if(last){const sp=spotFor(s,TASK[d].spot);s.x=Math.round(sp.x*100)/100;s.y=Math.round(sp.y*100)/100;s.task=d}
-  const sk=s.k[d]||0,r=1+sk/40,mult=has('biblioteca')?1.25:1;
+  const sk=s.k[d]||0,r=(1+sk/40)*techMult(d),mult=has('biblioteca')?1.25:1;
   if(d==='culinaria'&&S.res.frutas<1&&S.res.insetos<1){s.w[d]=Math.max(.2,s.w[d]-.3);return}
   let p=.3+.62*sk/(sk+25)+Math.min(.08,(S.res.ferramentas||0)*.004)-((S.res.frutas+S.res.refeicoes+S.res.insetos)<=.01?.12:0);
   if(d==='saude'||d==='ciencia'||d==='arte')p+=.05;
@@ -469,6 +533,142 @@ function Engine(S){
    else if(Math.random()<.15&&S.buildings.filter(x=>x.type==='custom'&&x.nome===i.nome).length<1+Math.floor(S.slimes.length/20)&&canAfford({madeira:30,pedra:30})){const sp=findSpot((Math.random()*2-1)*S.slimes.length,1);if(sp){S.res.madeira-=30;S.res.pedra-=30;S.buildings.push({id:S.nextId++,type:'custom',kind:i.kind,nome:i.nome,x:sp.x,y:sp.y,owner:b.id,at:Date.now()});indexB();log(`${b.name} construiu mais um(a) ${i.nome.toLowerCase()}.`)}}
   }
  }
+ // =================== CIVILIZAÇÃO ===================
+ const COSTM=8;
+ const day=()=>clock(S.steps).day;
+ const yearOf=d=>Math.floor((d-1)/28)+1;
+ function hist(t){S.history.unshift({d:day(),t});if(S.history.length>300)S.history.length=300}
+ const known=id=>!!S.disc[id];
+ function grant(id){if(!DISC[id]||S.disc[id])return;for(const r of DISC[id][2])grant(r);S.disc[id]=day()}
+ const dcost=id=>Math.round(DISC[id][4]*COSTM*(1+DISC[id][1]*1.2));
+ const invCost=()=>Math.round(250000*Math.pow(1.1,S.invN||0));
+ function eraName(i){if(i<ERAS.length)return ERAS[i];const k=i-ERAS.length;return k===0?'Era Estelar':k===1?'Era Galáctica':'Era Cósmica '+(k-1)}
+ const eraIcon=i=>i<ERAI.length?ERAI[i]:'🌌';
+ function calcEra(){
+  let e=0;for(let i=0;i<ERAS.length;i++){const ids=Object.keys(DISC).filter(k=>DISC[k][1]===i);const kn=ids.filter(known).length;if(kn>=Math.ceil(ids.length*.6))e=i;else break}
+  if(Object.keys(DISC).every(known))e=ERAS.length-1+1+Math.floor((S.invN||0)/10);
+  return e;
+ }
+ function available(){return Object.keys(DISC).filter(k=>!known(k)&&DISC[k][2].every(known))}
+ function pickTarget(){
+  const av=available();
+  if(S.event&&!S.event.soft&&EVENTS[S.event.k]&&av.includes(EVENTS[S.event.k].sol))return EVENTS[S.event.k].sol;
+  if(!av.length)return Object.keys(DISC).every(known)?'inv':null;
+  av.sort((a,b)=>dcost(a)-dcost(b));return pick(av.slice(0,2));
+ }
+ const TM={natureza:['coleta','agricultura','irrigacao','moinho_agua','cidade_verde'],construcao:['tijolo','engenharia'],culinaria:['fogo','ceramica'],saude:['ervas_med','saneamento','vacinas'],arte:['musica'],agua:['barco','moinho_agua'],carpintaria:['roda','motor'],pedra:['roda','metalurgia'],ciencia:['escrita','imprensa','computador'],defesa:['fogo','metalurgia']};
+ function techMult(d){let m=1;for(const id of TM[d]||[])if(known(id))m+=.15;m*=eventMult(d);return m}
+ function techAll(){let m=1;for(const id of ['ferramentas','metalurgia','robos','eletricidade'])if(known(id))m+=.05;m+=.25*Math.log2(1+(S.invN||0));return m}
+ const learnMult=()=>1+['escrita','imprensa','computador','internet'].filter(known).length*.08;
+ function eventMult(d){
+  const e=S.event&&EVENTS[S.event.k]?S.event.k:null;if(!e)return 1;const m=eventRaw(e,d);return S.event.soft?1-(1-m)*.3:m;
+ }
+ function eventRaw(e,d){
+  if(e==='seca')return d==='agua'||d==='natureza'?.5:1;
+  if(e==='praga')return d==='natureza'?.4:1;
+  if(e==='enchente')return .75;
+  if(e==='doenca')return .7;
+  if(e==='poluicao')return d==='natureza'?.6:.9;
+  if(e==='apagao')return .8;
+  if(e==='tempestade')return .8;
+  if(e==='chuva_meteoros')return .85;
+  return 1;
+ }
+ function rpGain(){
+  const n=S.slimes.length;let base=n*.05;for(const s of S.slimes)base+=(s.k.ciencia||0)/500;
+  for(const v of S.villages)base+=v.pop*.02;
+  const m=1+.2*has('biblioteca')+.2*has('observatorio')+.2*known('escrita')+.3*known('imprensa')+.5*known('computador')+.5*has('antena')+.05*S.villages.length+(S.event&&S.event.k==='apagao'?-.3:0);
+  return base*m;
+ }
+ function research(){
+  if(!S.cur||(S.cur!=='inv'&&known(S.cur)))S.cur=pickTarget();
+  if(S.event&&EVENTS[S.event.k]&&!known(EVENTS[S.event.k].sol)&&available().includes(EVENTS[S.event.k].sol))S.cur=EVENTS[S.event.k].sol;
+  if(!S.cur)return;
+  S.rp=(S.rp||0)+rpGain();
+  if(S.cur==='inv'){
+   const c=invCost();if(S.rp<c)return;S.rp-=c;
+   let nm;for(let i=0;i<30;i++){nm=pick(INV_A)+' '+pick(INV_B);if(!S.inv.includes(nm))break}
+   S.invN=(S.invN||0)+1;S.inv.unshift(nm);if(S.inv.length>40)S.inv.length=40;
+   const s=pick(S.slimes);gain(s,pick(DK),5);
+   log(`${s.name} inventou: ${nm}! (invenção nº ${S.invN})`);hist(`${s.name} inventou ${nm}.`);
+   S.cur=null;checkEra();return;
+  }
+  const c=dcost(S.cur);if(S.rp<c)return;S.rp-=c;
+  const id=S.cur,D=DISC[id];S.disc[id]=day();
+  const s=S.slimes.slice().sort((a,b)=>(b.k[D[3]]||0)-(a.k[D[3]]||0))[0];
+  if(s){gain(s,D[3],6);addFact(s,D[3],`A vila descobriu: ${D[0]}. ${D[5]}`)}
+  log(`Descoberta! ${s?s.name+' liderou':'A vila'} a invenção de: ${D[0]}. ${D[5]}`);hist(`Descobriram ${D[0]}${s?' (graças a '+s.name+')':''}.`);
+  if(s&&Math.random()<.3)legend(`${s.name}, que ajudou a descobrir ${D[0].toLowerCase()}`);
+  if(S.event&&EVENTS[S.event.k]&&EVENTS[S.event.k].sol===id){log(`A vila venceu: ${EVENTS[S.event.k].n}! A descoberta de ${D[0]} resolveu o problema.`);hist(`Venceram ${EVENTS[S.event.k].n.toLowerCase()} com ${D[0]}.`);S.event=null}
+  S.cur=null;checkEra();
+ }
+ function checkEra(){const e=calcEra();if(e>(S.era||0)){S.era=e;log(`${eraIcon(e)} A vila entrou na ${eraName(e)}!`);hist(`Começou a ${eraName(e)}.`);festival(`Festa da ${eraName(e)}`)}}
+ // ---- gerações ----
+ const lifeOf=s=>Math.round((s.life||DAYSTEPS*120)*(1+.1*has('enfermaria')+.1*known('saneamento')+.2*known('vacinas')));
+ const ageDays=s=>Math.max(0,Math.floor(((S.steps||0)-(s.bornStep||0))/DAYSTEPS));
+ function retire(s){
+  for(const d of DK)if(s.k[d])S.lib[d]=Math.round(((S.lib[d]||0)+s.k[d]*.5)*10)/10;
+  const h=home(s);if(h){h.owner=0;h.free=1}
+  S.slimes=S.slimes.filter(x=>x!==s);
+  S.memorial.unshift({name:s.name,gen:s.gen,prof:profName(s),lv:level(s),days:ageDays(s),d:day()});if(S.memorial.length>80)S.memorial.length=80;
+  log(`${s.name} viveu ${ageDays(s)} dias, chegou ao nível ${level(s)} e virou uma gotinha de memória que voltou para a floresta. Seus livros ficam na biblioteca.`);
+  if(level(s)>=18){hist(`${s.name}, ${profName(s).toLowerCase()}, virou gotinha de memória depois de ${ageDays(s)} dias.`);legend(`${s.name}, ${profName(s).toLowerCase()} de nível ${level(s)}`)}
+ }
+ function generations(){
+  for(const s of S.slimes.slice()){if(s.gen===1)continue;if((S.steps||0)-(s.bornStep||0)>lifeOf(s)&&S.slimes.length>8)retire(s)}
+ }
+ function libBoost(c){const f=.005*(has('escola')?2:1)*(known('imprensa')?1.5:1)*(known('internet')?1.5:1);for(const d of DK)if(S.lib[d])c.k[d]=Math.round(((c.k[d]||0)+S.lib[d]*f)*10)/10}
+ // ---- novas vilas ----
+ function colonies(){
+  for(const v of S.villages){if(Math.random()<.08&&v.pop<30+5*(S.era||0))v.pop++}
+  if(S.steps%300===0)for(const v of S.villages){
+   const c=CULT.find(x=>x[0]===v.cult)||CULT[0],amt=Math.round(v.pop*12);
+   const rmap={arte:'arte',ciencia:null,natureza:'frutas',agua:'refeicoes',construcao:'tijolos',saude:'remedios',culinaria:'refeicoes'},r=rmap[c[1]];
+   if(r)add(r,amt);else S.rp=(S.rp||0)+amt;
+   const s=pick(S.slimes);gain(s,c[1],1);
+   if(Math.random()<.35)log(`Uma caravana de ${v.name} (vila de ${v.cult}) trouxe ${r?amt+' de '+RES[r].toLowerCase():'ideias novas para os sábios'}.`);
+  }
+  if(S.slimes.length>=MAXS-10&&(known('barco')||known('roda'))&&(S.steps||0)-(S.lastColony??-1e9)>DAYSTEPS*2&&S.villages.length<8){
+   const go=S.slimes.filter(x=>x.gen>1).sort((a,b)=>(b.bornStep||0)-(a.bornStep||0)).slice(0,8);if(go.length<8)return;
+   const used=new Set(S.villages.map(v=>v.cult)),cult=(CULT.find(c=>!used.has(c[0]))||pick(CULT))[0];
+   const name=VNAMES.find(n=>!S.villages.some(v=>v.name===n))||('Vila '+(S.villages.length+1));
+   for(const s of go){const h=home(s);if(h){h.owner=0;h.free=1}}
+   S.slimes=S.slimes.filter(x=>!go.includes(x));
+   S.villages.push({id:S.nextId++,name,cult,pop:8,side:S.villages.length%2?-1:1,d:day(),founders:go.map(x=>x.name)});
+   S.lastColony=S.steps;
+   log(`${go.slice(0,3).map(x=>x.name).join(', ')} e mais ${go.length-3} partiram para fundar ${name}, uma nova vila de ${cult}!`);hist(`Fundaram ${name}, uma vila de ${cult}.`);
+  }
+ }
+ // ---- problemas que mudam ----
+ function events(){
+  if(S.event){if((S.steps||0)-S.event.start>S.event.dur){log(`${EVENTS[S.event.k].n} passou. A vila aprendeu a se preparar melhor.`);S.event=null}return}
+  if(S.steps%300!==0||Math.random()>.22)return;
+  const ck=clock(S.steps);
+  const ok=Object.keys(EVENTS).filter(k=>(S.era||0)>=EVENTS[k].era&&(k!=='poluicao'||S.pol>40)&&(k!=='apagao'||known('eletricidade'))&&(k!=='seca'||ck.si!==3));
+  if(!ok.length)return;const k=pick(ok),E0=EVENTS[k];
+  if(known(E0.sol)&&k!=='poluicao'){S.event={k,start:S.steps,dur:Math.round(E0.dur/2),soft:1};log(`${E0.i} ${E0.n} chegou, mas graças à descoberta ${DISC[E0.sol][0]} atrapalhou bem pouco.`);return}
+  S.event={k,start:S.steps,dur:E0.dur};log(`${E0.i} Problema na vila: ${E0.n}. ${E0.d} Os sábios vão pesquisar ${DISC[E0.sol][0].toLowerCase()} para resolver.`);hist(`${E0.n} atingiu a vila.`);
+ }
+ function pollution(){
+  S.pol=Math.max(0,Math.min(100,(S.pol||0)+.02*cnt('fabrica')-.03*cnt('usina')-.03*cnt('reciclagem')-treeCount/40000-(known('cidade_verde')?.03:0)));
+  if(S.event&&S.event.k==='poluicao'&&S.pol<10&&known('reciclagem')){log('O ar ficou limpo de novo! A poluição foi vencida.');hist('Venceram a poluição.');S.event=null}
+ }
+ // ---- cultura ----
+ function legend(t){S.culture.legends.unshift({d:day(),t:'A lenda de '+t});if(S.culture.legends.length>30)S.culture.legends.length=30}
+ function festival(nome){
+  if(!has('praca'))return;S.culture.fest={n:nome,until:(S.steps||0)+DAYSTEPS/2};
+  for(const s of S.slimes)gain(s,'arte',.3);add('arte',S.slimes.length*2);
+  const s=pick(S.slimes),song=Math.random()<.5?pick(SONGS):`Canção de ${s.name}`;
+  if(!S.culture.songs.some(x=>x.n===song)){S.culture.songs.unshift({n:song,by:s.name,d:day()});if(S.culture.songs.length>30)S.culture.songs.length=30}
+  let comp='';if(S.villages.length){const v=pick(S.villages),c=CULT.find(x=>x[0]===v.cult);const win=Math.random()<.5;comp=` Na competição de ${DOMS[c[1]].n.toLowerCase()} contra ${v.name}, ${win?'nossa vila ganhou':v.name+' ganhou'}!`;if(Math.random()<.5)hist(`Competição de ${DOMS[c[1]].n.toLowerCase()}: ${win?'vitória nossa':'vitória de '+v.name}.`)}
+  log(`🎉 ${nome}! Todos dançaram na praça e ${s.name} cantou “${song}”.${comp}`);
+ }
+ function civStep(){
+  research();
+  if(S.steps%10===0){generations();colonies();pollution()}
+  events();
+  if(has('fabrica'))add('ferramentas',.1*cnt('fabrica'));
+ }
  function step(last){
   const n=S.slimes.length,tools=1+Math.min(.5,(S.res.ferramentas||0)*.02);
   const hungry=S.res.frutas+S.res.refeicoes+S.res.insetos<=0.01;
@@ -477,9 +677,9 @@ function Engine(S){
   let busy=[];if(S.pred)busy=predStep(last)||[];else predSpawn();
   const low=S.res.frutas+S.res.insetos+S.res.refeicoes*2<n*4;
   const ck=clock(S.steps);
-  if(ck.si!==S.seasonIdx){S.seasonIdx=ck.si;log(['A primavera chegou! Flores por toda parte e muitos insetos voando.','Chegou o verão: as árvores estão carregadas de frutas.','O outono chegou: as folhas caem e os slimes começam a guardar comida para o inverno.','O inverno chegou: as árvores quase não dão frutas. Hora de usar a comida guardada!'][ck.si])}
-  const M=(ck.night?.6:1)*(1+vbonus())*tools*(hungry?.5:1+Math.min(.3,(S.res.arte||0)/200+(has('praca')?.1:0)+(S.res.remedios>1?.05:0)));
-  add('frutas',.7*Math.min(n,fruitTrees/2+1)*(has('horta')?1.3:1)*M*ck.season.fr);
+  if(ck.si!==S.seasonIdx){S.seasonIdx=ck.si;festival(['Festa das Flores','Festa do Verão','Festa da Colheita','Festa das Lanternas'][ck.si]);log(['A primavera chegou! Flores por toda parte e muitos insetos voando.','Chegou o verão: as árvores estão carregadas de frutas.','O outono chegou: as folhas caem e os slimes começam a guardar comida para o inverno.','O inverno chegou: as árvores quase não dão frutas. Hora de usar a comida guardada!'][ck.si])}
+  const M=(ck.night?.6:1)*(1+vbonus())*techAll()*eventMult('geral')*tools*(hungry?.5:1+Math.min(.3,(S.res.arte||0)/200+(has('praca')?.1:0)+(S.res.remedios>1?.05:0)));
+  add('frutas',.7*Math.min(n,fruitTrees/2+1)*(has('horta')?1.3:1)*M*ck.season.fr*techMult('natureza'));
   S.res.frutas*=has('celeiro')?(cnt('celeiro')>1?.99995:.9999):ck.si===1?.9993:.9996;
   add('madeira',.15*n*M);
   const nd=needs();
@@ -489,6 +689,7 @@ function Engine(S){
   if(hungry&&ck.si===3&&Math.random()<.05){const x=pick(S.slimes);if(addFact(x,'culinaria','Lição: Guardar comida no outono ajuda a passar o inverno.'))log(`${x.name} sentiu fome no inverno e aprendeu: guardar comida no outono ajuda a passar o inverno.`)}
   if(has('viveiro')&&S.res.mudas>=1&&Math.random()<.3&&plantTree()){S.res.mudas-=1;log('Uma muda nova foi plantada na floresta.')}
   S.steps=(S.steps||0)+1;
+  civStep();
   if(S.steps%3===0){autoBuild();checkExpand()}
   if(S.steps%15===0)upgrade();
   if(S.steps%5===0&&S.ideas.length)workIdeas();
@@ -531,6 +732,13 @@ function Engine(S){
    const pro=['cerca','fogueira','torre'].filter(has).map(x=>B[x].n.toLowerCase());
    return (S.pred?`Cuidado, ${PRED[S.pred.k].art} ${PRED[S.pred.k].n} está perto da vila agora! `:'Agora está tudo calmo. ')+(pro.length?`Nós já temos ${pro.join(', ')} para nos proteger.`:'Ainda não temos proteções, mas os guardiões estão aprendendo.');
   }
+  if(/(que era|qual era|em que era|qual a era|era de voces|era voces)/.test(t))return `Estamos na ${eraIcon(S.era||0)} ${eraName(S.era||0)}! Já fizemos ${Object.keys(S.disc).length} descobertas${S.invN?` e ${S.invN} invenções`:''}. ${S.cur&&S.cur!=='inv'?`Agora os sábios estudam ${DISC[S.cur][0].toLowerCase()}.`:S.cur==='inv'?'Agora estamos inventando coisas que ninguém nunca viu!':''}`;
+  if(/(descobri|invent|pesquisando|estudando|tecnologia)/.test(t)){const last=Object.entries(S.disc).sort((a,b)=>b[1]-a[1])[0];return `${S.inv[0]?`A última invenção foi: ${S.inv[0]}! `:last?`A última descoberta foi ${DISC[last[0]][0].toLowerCase()}. `:''}${S.cur==='inv'?'Agora estamos inventando algo novinho.':S.cur?`Agora estamos estudando ${DISC[S.cur][0].toLowerCase()}: ${DISC[S.cur][5].toLowerCase()}`:''} Quer me ensinar alguma coisa que ajude?`}
+  if(/(lenda|historia da vila|conta uma historia|era uma vez)/.test(t)){const L=S.culture.legends;if(L.length)return `${pick(L).t}. Os mais velhos contam essa história nas festas!`;const h=S.history[S.history.length-1];return h?`No começo de tudo, ${h.t.charAt(0).toLowerCase()+h.t.slice(1)} Desde então muita coisa aconteceu!`:'Nossa história está só começando!'}
+  if(/(cancao|musica|canta|cantar)/.test(t)){const so=S.culture.songs;return so.length?`Uma das nossas músicas favoritas é “${pick(so).n}”! Lá-lá-lá… 🎵 Você sabe alguma canção?`:'Ainda estamos aprendendo a fazer músicas. Me ensina uma?'}
+  if(/(outras vilas|outra vila|vizinh|colonia)/.test(t))return S.villages.length?`Temos ${S.villages.length} vilas amigas: ${S.villages.map(v=>`${v.name} (vila de ${v.cult})`).join(', ')}. Elas mandam caravanas com presentes!`:'Ainda somos só uma vila. Quando ficarmos bem cheios, um grupo vai partir para fundar uma vila nova!';
+  if(/(problema|seca|enchente|praga|poluicao|gripe|tempestade|apagao)/.test(t)&&/\?|como|tem|esta/.test(t)){const ev=S.event&&EVENTS[S.event.k];return ev?`Estamos enfrentando: ${ev.n}. ${ev.d} ${S.event.soft?'Mas já sabemos lidar com isso!':`Os sábios estão estudando ${DISC[ev.sol][0].toLowerCase()} para resolver.`}`:'Agora está tudo em paz, sem problemas na vila!'}
+  if(/(idade|quantos anos|quantos dias|velho|velhinho)/.test(t))return s.gen===1?`Eu sou o ancião fundador! Estou aqui desde o primeiro dia, há ${day()} dias.`:`Tenho ${ageDays(s)} dias de vida. Quando eu ficar bem velhinho, vou virar uma gotinha de memória e meu saber fica nos livros da biblioteca.`;
   if(/(precisa|falta|necessita)/.test(t)){const nd=needs(),top=DK.slice().sort((a,b)=>nd[b]-nd[a])[0];return nd[top]>0?`A vila está precisando de mais ${DOMS[top].n.toLowerCase()}. Se você souber algo sobre isso, me ensina!`:'A vila está bem servida agora. Mas sempre dá para aprender mais!'}
   if(/(o que (voce )?(sabe|aprendeu)|me (conta|ensina) (algo|alguma)|curiosidade)/.test(t)){const f=pick(s.facts.filter(x=>x.src||/^Lição/.test(x.f))||[]);return f?`Uma coisa que eu aprendi: ${f.f.replace(/^Lição: /,'')}`:`Sei que ${pick(ENC[profOf(s)||'natureza'])[0].toLowerCase()+pick(ENC[profOf(s)||'natureza']).slice(1)}`}
   if(!isQ)return null;
@@ -594,10 +802,18 @@ function Engine(S){
   if(nd[top]>0&&Math.random()<.6){d=top;why='porque a vila precisa'}else if(s.lastFail){d=s.lastFail;why='porque errou nisso'}else{d=profOf(s)||top;why='por curiosidade'}
   return{s,d,why,tema:TASK[d].topic,wiki:pick(WIKI[d])};
  }
+ if(!S.civInit){S.civInit=1;
+  const BT={fogueira:'fogo',cozinha:'fogo',horta:'agricultura',casa:'tijolo',sobrado:'tijolo',biblioteca:'escrita',enfermaria:'ervas_med',atelie:'musica',oficina:'ferramentas',fonte:'irrigacao',ponte:'engenharia',celeiro:'ceramica'};
+  for(const b of S.buildings){const t=B[b.type]&&B[b.type].tech;if(t)grant(t);if(BT[b.type])grant(BT[b.type])}
+  if(S.slimes.length>3){grant('coleta');grant('cordas')}
+  for(const s of S.slimes){if(s.bornStep===undefined)s.bornStep=s.gen===1?0:Math.round((S.steps||0)-Math.random()*DAYSTEPS*70);if(!s.life)s.life=Math.round(DAYSTEPS*(96+Math.random()*48))}
+  S.era=calcEra();
+  if(!S.history.length){hist(`${S.slimes[0]?S.slimes[0].name:'Azulim'} acordou na clareira da floresta e a história da vila começou.`);for(const id of Object.keys(S.disc))hist(`A vila já sabia: ${DISC[id][0]}.`);hist(`A vila está na ${eraName(S.era)}.`)}
+ }
  if(!S.ideasScanned){S.ideasScanned=1;for(const x of S.slimes)for(const m of x.chat)if(m.r==='u'&&m.t&&safeText(m.t))teachIdea(x,m.a||'Visitante',m.t)}
- return{S,T,inB,isWet,home,has,needs,run,talk,capOf,clock:()=>clock(S.steps),learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
+ return{S,T,inB,isWet,home,has,needs,run,talk,capOf,known,available,dcost,invCost,eraName,eraIcon,calcEra,rpGain,ageDays,lifeOf,yearOf,clock:()=>clock(S.steps),learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
 }
 
-const Mundo={DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,clean,safeText,clock,SEASONS,DAYSTEPS,words,h2,vn,fbm,fmt};
+const Mundo={ERAS,ERAI,DISC,EVENTS,CULT,DOMS,DK,RES,B,TASK,BUGS,PRED,ENC,WIKI,NAMES,FRUITC,MAXS,Engine,newState,total,level,profOf,profName,detect,clean,safeText,clock,SEASONS,DAYSTEPS,words,h2,vn,fbm,fmt};
 if(typeof module!=='undefined'&&module.exports)module.exports=Mundo;else root.Mundo=Mundo;
 })(typeof window!=='undefined'?window:globalThis);
