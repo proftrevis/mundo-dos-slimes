@@ -497,8 +497,8 @@ function renderSlime(){
 }
 function renderBuild(){
  const counts={};for(const b of S.buildings)counts[b.type]=(counts[b.type]||0)+1;
- $('#p-build').innerHTML=`<h3>Recursos da vila</h3><div class="res">${Object.keys(RES).map(r=>`<div><b>${fmt(S.res[r]||0)}</b>${RES[r]}</div>`).join('')}</div>
- <p class="note">Os slimes trabalham, constroem e plantam árvores sozinhos. Construções nunca ocupam árvores, riachos ou a margem deles, e o mundo cresce quando falta espaço.</p>
+ $('#p-build').innerHTML=`<h3>Recursos da vila</h3><div class="res">${Object.keys(RES).map(r=>`<div><b>${fmt(S.res[r]||0)}</b>${RES[r]}<small style="display:block;font-size:11.5px">limite ${fmt(E.capOf?E.capOf(r):0)}</small></div>`).join('')}</div>
+ <p class="note">Os slimes trabalham, constroem e plantam árvores sozinhos. Cada recurso tem um limite de armazenamento que cresce com a vila e com celeiros; o que sobra vira melhorias. Construções nunca ocupam árvores, riachos ou a margem deles, e o mundo cresce quando falta espaço.</p>
  <h3>Ideias ensinadas pelos visitantes</h3>${(S.ideas||[]).length?`<div class="blist">${S.ideas.map(i=>`<div class="bitem"><strong>${esc(i.nome)}${i.done?' · pronta':''}</strong><p>${i.done?'Os slimes já sabem fazer.':`Aprendendo: ${Math.min(99,Math.round((i.prog||0)/12*100))}%`}</p></div>`).join('')}</div>`:'<p class="note">Ensine os slimes a construir algo novo, por exemplo: “construam um jardim de flores”.</p>'}<h3>Construções</h3><div class="blist">${Object.entries(B).filter(([k])=>k!=='custom').map(([k,b])=>`<div class="bitem"><strong>${b.n}${counts[k]?' · '+counts[k]:''}${(()=>{const m=Math.max(0,...S.buildings.filter(x=>x.type===k).map(x=>x.nv||1));return m>1?' · nível '+m:''})()}</strong><p>${b.d}</p></div>`).join('')}</div>`;
 }
 function renderLog(){$('#log').innerHTML=S.log.map(l=>`<li>${esc(l.t)}<time>${new Date(l.at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</time></li>`).join('')}

@@ -21,7 +21,9 @@ async function wiki(q,s,d){
   const all=txt.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú])/).map(x=>x.trim()).filter(x=>x.length>=40&&x.length<=230&&!/[{}=]/.test(x));
   if(!all.length||all.filter(x=>!M.safeText(x)).length>all.length*.25)continue;
   const qw=new Set(M.words(q+' '+(d?M.DOMS[d].kw:'')));
-  const rel=x=>M.words(x).some(w=>qw.has(w)||[...qw].some(y=>y.length>4&&w.startsWith(y.slice(0,5))));
+  const qOnly=new Set(M.words(q)),dk=new Set(M.DK.flatMap(k=>M.DOMS[k].kws));
+  const hitW=(w,set)=>set.has(w)||[...set].some(y=>y.length>4&&w.startsWith(y.slice(0,5)));
+  const rel=x=>{const ws=M.words(x);const nq=ws.filter(w=>hitW(w,qOnly)).length,nd=ws.filter(w=>hitW(w,dk)).length;return nq>=2||(nq>=1&&nd>=1)||(!qOnly.size&&nd>=2)};
   const sents=all.filter(x=>M.safeText(x)&&!known.has(x)&&rel(x));
   if(!sents.length)continue;
   if(!d){const h=M.detect(txt);d=Object.keys(h).sort((a,b)=>h[b]-h[a])[0]||M.profOf(s)||'ciencia'}

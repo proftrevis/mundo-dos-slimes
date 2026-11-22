@@ -21,7 +21,7 @@ function clean(t){return String(t||'')
  .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g,'[removido]')
  .replace(/@\w{2,}/g,'[removido]')
  .replace(BAD,m=>m[0]+'*'.repeat(Math.max(2,m.length-1)))}
-const UNSAFE=/(morte|morre|mort[oa]s?\b|matou|matar|acidente|nuclear|radia|reator|guerra|bomba|arma\b|armas|assassin|homic|suic|crime|criminos|drog|sexo|sexual|estupr|terror|violen|tortur|massacre|explos|cadaver|evacua|abuso|sequestr|genocid|nazis|escrav|pornogr|alcool|cigarr|tabaco|aposta|cassino|politic|eleic|partido|religi|resid(uo|uos)\b)/;
+const UNSAFE=/(morte|morre|mort[oa]s?\b|matou|matar|acidente|nuclear|radia|reator|guerra|bomba|arma\b|armas|assassin|homic|suic|crime|criminos|drog|sexo|sexual|estupr|terror|violen|tortur|massacre|explos|cadaver|evacua|abuso|sequestr|genocid|nazis|escrav|pornogr|alcool|cigarr|tabaco|aposta|cassino|politic|eleic|partido|religi|resid(uo|uos)\b|caucas|etni|racia|racis|colonizad|imigra|escravi|ditadur|militar|soldad|sociedade|populacao|economi|imposto|dinheiro)/;
 function safeText(t){return !UNSAFE.test(norm(t))}
 const STOP=new Set('para como porque quando onde qual quais quanto quantos quem voce voces sobre isso essa esse esta este aqui tudo muito mais menos pode podem fazer sabe saber tem tinha uma umas uns dos das nos nas com sem por que ele ela eles elas meu minha seu sua sim nao entao tambem ainda'.split(' '));
 const words=t=>norm(t).replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(w=>w.length>3&&!STOP.has(w));
@@ -100,29 +100,31 @@ function Engine(S){
   let name=NAMES.find(n=>!used.has(n));if(!name){const suf=['do Riacho','da Colina','do Bosque','da Cachoeira','do Vale','da Lagoa','Júnior','Segundo'];for(const a of NAMES){for(const b of suf){if(!used.has(a+' '+b)){name=a+' '+b;break}}if(name)break}}name=name||('Slime '+S.nextId);
   const hue=Math.max(175,Math.min(290,s.hue+(Math.random()*50-25)));
   const c={id:S.nextId++,name,hue:Math.round(hue),gen:s.gen+1,k:{},facts:s.facts.slice(-3).map(f=>({...f})),chat:[],home:null,x:s.x+.6,y:s.y+.3,nextSplit:0,born:Date.now(),topic:'',w:{},ok:0,err:0};
-  const inh=has('escola')?.3:.15;for(const d of DK)if(s.k[d])c.k[d]=Math.round(s.k[d]*inh*10)/10;
+  const inh=has('escola')?.3:.15,pm=profOf(s);for(const d of DK)if(s.k[d])c.k[d]=Math.round(s.k[d]*inh*(d===pm?.3:1)*10)/10;
   c.nextSplit=Math.round(total(c)+25);
-  const cov=DK.map(d=>[d,S.slimes.filter(x=>profOf(x)===d).length]).sort((a,b)=>a[1]-b[1]||Math.random()-.5);c.w[cov[0][0]]=4;
+  const cov=DK.map(d=>[d,S.slimes.filter(x=>profOf(x)===d).length]).sort((a,b)=>a[1]-b[1]||Math.random()-.5);c.w[cov[0][0]]=6;c.focus={d:cov[0][0],n:80};
   pushChat(c,{r:'s',t:`Oi! Eu nasci do ${s.name}! Lembro de umas coisinhas que ele sabia, mas quero aprender as minhas próprias. Acho que vou gostar de ${DOMS[cov[0][0]].n.toLowerCase()}!`});
   S.slimes.push(c);
   log(`${s.name} atingiu ${Math.floor(total(s))} de conhecimento e se dividiu! Nasceu ${name}.`);
  }
  const canAfford=c=>Object.entries(c).every(([r,v])=>(S.res[r]||0)>=v);
  function qualifies(s,type){const b=B[type];if(b.tot&&total(s)<b.tot)return false;if(b.minN&&S.slimes.length<b.minN)return false;if(b.needs&&!(b.needs==='caminho'?S.paths.length>=20:has(b.needs)))return false;const f=S.taught[type]?.6:1;return Object.entries(b.req).every(([d,v])=>(s.k[d]||0)>=v*f)}
- const facLimit=()=>1+Math.floor(S.slimes.length/6);
- function build(s,type){
-  const b=B[type];if(!qualifies(s,type)||!canAfford(b.cost))return false;
+ const facLimit=()=>1+Math.floor(S.slimes.length/25);
+ function build(s,type,by){
+  const b=B[type];by=by||s;if(!qualifies(by,type)||!canAfford(b.cost))return false;
   let spot;
-  if(b.home){const h=home(s);if(h&&B[h.type].lv>=b.lv)return false;if(h){spot={x:h.x,y:h.y};S.buildings=S.buildings.filter(x=>x!==h)}}
+  if(b.home){const h=home(s);if(h&&B[h.type].lv>=b.lv)return false;if(b.lv>=4){const sorted=S.slimes.map(total).sort((x,y)=>y-x),rank=sorted.indexOf(total(s))/Math.max(1,sorted.length),cap=rank<.25?7:rank<.5?6:rank<.75?5:4;if(b.lv>cap)return false}if(h){spot={x:h.x,y:h.y};S.buildings=S.buildings.filter(x=>x!==h)}}
   else if(cnt(type)>=Math.min(facLimit(),(b.max??99)))return false;
   if(!spot){const hh=home(s);spot=findSpot(hh?hh.x:0,hh?hh.y+1:1);if(!spot)return false}
   for(const[r,v]of Object.entries(b.cost))S.res[r]-=v;
   const nb={id:S.nextId++,type,x:spot.x,y:spot.y,owner:s.id,at:Date.now()};
   S.buildings.push(nb);if(b.home)s.home=nb.id;indexB();
-  log(`${s.name} construiu: ${b.n}.`);return true;
+  log(by!==s?`${by.name} ajudou ${s.name} a construir: ${b.n}.`:`${s.name} construiu: ${b.n}.`);return true;
  }
  function autoBuild(){
-  for(const s of S.slimes){const h=home(s);for(const t of Object.keys(B).filter(t=>B[t].home).sort((a,b)=>B[b].lv-B[a].lv)){if(h&&B[h.type].lv>=B[t].lv)break;if(build(s,t))return}}
+  const builders=S.slimes.slice().sort((a,b)=>(b.k.construcao||0)-(a.k.construcao||0)).slice(0,3);
+  const hl=s=>{const h=home(s);return h?B[h.type].lv:0};
+  for(const s of S.slimes.slice().sort((a,b)=>hl(a)-hl(b))){const h=home(s);for(const t of Object.keys(B).filter(t=>B[t].home).sort((a,b)=>B[b].lv-B[a].lv)){if(h&&B[h.type].lv>=B[t].lv)break;if(build(s,t))return;for(const bd of builders)if(bd!==s&&build(s,t,bd))return}}
   if(S.slimes.some(s=>!s.home))return;
   for(const t of Object.keys(B)){if(B[t].home||cnt(t)>=Math.min(facLimit(),(B[t].max??99)))continue;const s=S.slimes.find(x=>qualifies(x,t));if(s&&build(s,t))return}
  }
@@ -164,7 +166,7 @@ function Engine(S){
  }
  function chooseDomain(s,nd){
   if(s.focus&&s.focus.n>0){s.focus.n--;if(!s.focus.n)delete s.focus;return s.focus?s.focus.d:chooseDomain(s,nd)}
-  const p=profOf(s);if(p&&Math.random()>.12)return p;
+  const p=profOf(s);if(p){const crowd=S.slimes.filter(x=>profOf(x)===p).length>S.slimes.length/5;if(Math.random()>(crowd?.35:.12))return p}
   let tot=0;const ws=DK.map(d=>{const w=(s.w[d]||1)*(1+nd[d]);tot+=w;return w});
   let x=Math.random()*tot;for(let i=0;i<DK.length;i++){x-=ws[i];if(x<=0)return DK[i]}return DK[0];
  }
@@ -207,9 +209,11 @@ function Engine(S){
   for(const k in s.w)s.w[k]=Math.round(s.w[k]*100)/100;
  }
  function spawnBugs(){
-  const n=S.slimes.length,cap=Math.min(20,4+n+Math.floor(treeCount/30));
-  for(const b of S.bugs)b.age++;
-  S.bugs=S.bugs.filter(b=>b.age<60);
+  for(let r=0;r<1+Math.floor(S.slimes.length/15);r++)spawnBug(r===0);
+ }
+ function spawnBug(first){
+  const n=S.slimes.length,cap=Math.min(60,4+Math.floor(n/2)+Math.floor(treeCount/40));
+  if(first){for(const b of S.bugs)b.age++;S.bugs=S.bugs.filter(b=>b.age<60)}
   const ck=clock(S.steps);
   if(S.bugs.length>=cap*Math.min(1,ck.season.bug)||Math.random()>.45*ck.season.bug)return;
   const bw=q=>BUGS[q].w*(BUGS[q].fly?(ck.night?3:.6):(ck.night?.5:1));
@@ -376,7 +380,7 @@ function Engine(S){
   S.res.frutas*=has('celeiro')?(cnt('celeiro')>1?.99995:.9999):ck.si===1?.9993:.9996;
   add('madeira',.15*n*M);
   const nd=needs();
-  for(const s of S.slimes.slice()){if(busy.includes(s))continue;if(s.scared>0){s.scared--;if(last){s.task=null;if(!s.say||!/medo/.test(s.say))s.say='Ainda estou com um pouquinho de medo…'}continue}if(S.bugs.length&&Math.random()<(low?.35:.1)&&hunt(s,last))continue;doTask(s,nd,last)}
+  for(const s of S.slimes.slice()){if(busy.includes(s))continue;if(s.scared>0){s.scared--;if(last){s.task=null;if(!s.say||!/medo/.test(s.say))s.say='Ainda estou com um pouquinho de medo…'}continue}if(S.bugs.length&&Math.random()<(low?.35:.1)*Math.min(1,S.bugs.length/(S.slimes.length*.25))&&hunt(s,last))continue;doTask(s,nd,last)}
   let need=.35*n*(ck.si===3?1.15:1);const meals=Math.min(S.res.refeicoes,need/2);S.res.refeicoes-=meals;need-=meals*2;const bi=Math.min(S.res.insetos,need*.5);S.res.insetos-=bi;need-=bi;S.res.frutas=Math.max(0,S.res.frutas-need);
   if(n>1&&Math.random()<.3){const a=pick(S.slimes),b=pick(S.slimes);if(a!==b){const[t,l]=level(a)>=level(b)?[a,b]:[b,a],d=profOf(t);if(d)gain(l,d,.3*(has('biblioteca')?1.25:1))}}
   if(hungry&&ck.si===3&&Math.random()<.05){const x=pick(S.slimes);if(addFact(x,'culinaria','Lição: Guardar comida no outono ajuda a passar o inverno.'))log(`${x.name} sentiu fome no inverno e aprendeu: guardar comida no outono ajuda a passar o inverno.`)}
@@ -389,7 +393,8 @@ function Engine(S){
   if(has('hangar')&&S.steps%60===0){const x=pick(S.slimes);gain(x,pick(DK),.6);if(Math.random()<.15)log(`Um aviãozinho voltou de longe e ${x.name} aprendeu uma novidade.`)}
   if(S.steps%10===0&&has('mercado'))market();
  }
- function run(steps){for(let i=0;i<steps;i++)step(i===steps-1);for(const k in S.res)S.res[k]=Math.round(Math.max(0,S.res[k])*100)/100}
+ function capOf(k){const n=S.slimes.length,cel=1+.5*cnt('celeiro');if(k==='frutas'||k==='refeicoes'||k==='insetos')return Math.round((300+60*n)*cel);if(k==='madeira'||k==='pedra'||k==='tijolos')return 400+80*n;if(k==='ferramentas'||k==='remedios')return 100+15*n;return 300+50*n}
+ function run(steps){for(let i=0;i<steps;i++){step(i===steps-1);if(i%20===0)for(const k in S.res)if(S.res[k]>capOf(k))S.res[k]=capOf(k)}for(const k in S.res)S.res[k]=Math.round(Math.max(0,Math.min(S.res[k],capOf(k)))*100)/100}
  function news(){const l=S.log.slice(0,25).map(x=>x.t).filter(t=>/(nasceu|construiu|apareceu|espantaram|melhorou|chegou|cresceu|primavera|verão|outono|inverno|caçou)/i.test(t)&&!/(ideia de|ensinou|pedido de|conversou)/.test(t));return l.length?pick(l.slice(0,6)):null}
  function answer(s,text,author,fr){
   author=author||'amigo';fr=fr||{n:1};
@@ -487,5 +492,5 @@ function Engine(S){
   return{s,d,why,tema:TASK[d].topic,wiki:pick(WIKI[d])};
  }
  if(!S.ideasScanned){S.ideasScanned=1;for(const x of S.slimes)for(const m of x.chat)if(m.r==='u'&&m.t&&safeText(m.t))teachIdea(x,m.a||'Visitante',m.t)}
- return{S,T,inB,isWet,home,has,needs,run,talk,clock:()=>clock(S.steps),learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
+ return{S,T,inB,isWet,home,has,needs,run,talk,capOf,clock:()=>clock(S.steps),learnResearch,localResearch,researchPlan,log,get fruitTrees(){return fruitTrees},get treeCount(){return treeCount}};
 }
